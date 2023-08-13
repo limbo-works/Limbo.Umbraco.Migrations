@@ -6,6 +6,7 @@ using System.Text;
 using HtmlAgilityPack;
 using Limbo.Umbraco.Migrations.Exceptions;
 using Limbo.Umbraco.Migrations.Models.BlockList;
+using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -511,6 +512,53 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         }
 
+        public virtual UrlPickerList? ConvertLinkPickerList(LinkPickerList? list) {
+
+            if (list is null) return null;
+
+            UrlPickerList temp = new();
+
+            foreach (LinkPickerItem item in list.Items) {
+
+                UrlPickerItem? urlItem = ConvertLinkPickerItem(item);
+                if (urlItem is not null) temp.Add(urlItem);
+
+            }
+
+            return temp.Count == 0 ? null : temp;
+
+        }
+
+        public virtual UrlPickerItem? ConvertLinkPickerItem(LinkPickerItem? item) {
+
+            if (item is null) return null;
+
+            string? target = item.Target == "_self" ? null : item.Target.NullIfWhiteSpace();
+
+            switch (item.Mode) {
+
+                case LinkPickerMode.Content:
+                    try {
+                        LegacyContent content = MigrationsClient.GetContentById(item.Id);
+                        return UrlPickerItem.CreateContentItem(item.Name, new GuidUdi(Constants.UdiEntityType.Document, content.Key), item.Url, target);
+                    } catch (Exception ex) {
+                        throw new Exception($"Failed getting content with ID {item.Id}...", ex);
+                    }
+
+                case LinkPickerMode.Media:
+                    IMedia? media = ImportMedia(item.Id);
+                    return media is null ? null : UrlPickerItem.CreateMediaItem(item.Name, media.GetUdi(), item.Url, target);
+
+                default:
+                    return string.IsNullOrWhiteSpace(item.Url) ? null : UrlPickerItem.CreateExternalItem(item.Name, item.Url, target);
+
+            }
+
+        }
+
+        public virtual UrlPickerList? ConvertLinkPickerItemAsList(LinkPickerItem? item) {
+            return ConvertLinkPickerItem(item) is { } result ? new UrlPickerList(result) : null;
+        }
 
         #endregion
 
