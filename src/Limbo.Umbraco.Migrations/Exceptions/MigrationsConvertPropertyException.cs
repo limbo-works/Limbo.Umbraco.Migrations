@@ -4,7 +4,7 @@ using Limbo.Umbraco.MigrationsClient.Models.Properties;
 
 namespace Limbo.Umbraco.Migrations.Exceptions {
 
-    public class MigrationsConvertPropertyException : Exception {
+    public class MigrationsConvertPropertyException : MigrationsException {
 
         public ILegacyElement Owner { get; }
 
