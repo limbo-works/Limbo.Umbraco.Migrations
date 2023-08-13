@@ -8,10 +8,14 @@ using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.Migrations.Services {
 
     public class MigrationsServiceDependencies {
+
+        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
 
         public IConfiguration Configuration { get; }
         public IWebHostEnvironment WebHostEnvironment { get; }
@@ -26,6 +30,7 @@ namespace Limbo.Umbraco.Migrations.Services {
         public IGridFactory GridFactory { get; }
         public GridControlConverterCollection GridControlConverters { get; }
         public IMigrationsClient MigrationsClient { get; }
+        public IUmbracoContext UmbracoContext => _umbracoContextAccessor.GetRequiredUmbracoContext();
 
         public MigrationsServiceDependencies(IConfiguration configuration,
             IWebHostEnvironment webHostEnvironment,
@@ -39,7 +44,9 @@ namespace Limbo.Umbraco.Migrations.Services {
             IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
             IGridFactory gridFactory,
             GridControlConverterCollection gridControlConverters,
-            IMigrationsClient migrationsClient) {
+            IMigrationsClient migrationsClient,
+            IUmbracoContextAccessor umbracoContextAccessor) {
+            _umbracoContextAccessor = umbracoContextAccessor;
             Configuration = configuration;
             WebHostEnvironment = webHostEnvironment;
             ContentService = contentService;
