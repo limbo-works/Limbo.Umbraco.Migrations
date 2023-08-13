@@ -32,9 +32,9 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         BlockListSettingsData CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel;
 
-        bool TryParseUdi(string value, [NotNullWhen(true)] out GuidUdi? result);
+        bool TryParseUdi(string? value, [NotNullWhen(true)] out GuidUdi? result);
 
-        string? ConvertRte(string text);
+        string? ConvertRte(string? text);
 
         UrlPickerList? ConvertLinkPickerList(LinkPickerList? list);
 

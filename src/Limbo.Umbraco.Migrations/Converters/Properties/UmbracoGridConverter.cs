@@ -55,7 +55,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
             } catch (Exception ex) {
 
-                throw new Exception($"Converting grid value failed for entity '{owner.Name}'\r\n\r\nID: {owner.Id}\r\nKey: {owner.Key}\r\n\r\n\r\n", ex);
+                throw new Exception($"Converting grid value failed for entity '{owner.Name}'\r\n\r\nID: {owner.Key}\r\nKey: {owner.Key}\r\n\r\n\r\n", ex);
 
             }
 

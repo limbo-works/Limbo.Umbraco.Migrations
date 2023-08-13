@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -9,11 +10,17 @@ using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
+using Limbo.Umbraco.MigrationsClient.Models.ContentTypes;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
+using Limbo.Umbraco.MigrationsClient.Models.Umbraco.NestedContent;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Json.Newtonsoft;
 using Skybrud.Essentials.Json.Newtonsoft.Extensions;
+using Skybrud.Essentials.Strings.Extensions;
 using Skybrud.Umbraco.GridData.Models;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Extensions;
@@ -41,6 +48,10 @@ namespace Limbo.Umbraco.Migrations.Services {
         public IMigrationsClient MigrationsClient => Dependencies.MigrationsClient;
 
         public int MigrationUserId { get; protected set; } = Constants.Security.SuperUserId;
+
+        protected HashSet<int> IgnoredIds { get; } = new();
+
+        protected HashSet<Guid> IgnoredKeys { get; } = new();
 
         #endregion
 
@@ -94,6 +105,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
             // Make sure we use the same GUID key
             content.Key = source.Key;
+            content.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
 
             // Convert the individual properties
             ConvertProperties(source, content);
@@ -106,6 +118,8 @@ namespace Limbo.Umbraco.Migrations.Services {
         }
 
         public virtual IMedia? ImportMedia(int id) {
+
+            if (IgnoredIds.Contains(id)) return null;
 
             // Get the legacy media item from the old site
             LegacyMedia source = MigrationsClient.GetMediaById(id);
@@ -120,6 +134,8 @@ namespace Limbo.Umbraco.Migrations.Services {
         }
 
         public virtual IMedia? ImportMedia(Guid key) {
+
+            if (IgnoredKeys.Contains(key)) return null;
 
             // Check whether the media item already exists
             IMedia? media = MediaService.GetById(key);
@@ -154,6 +170,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
             // Make sure we use the same GUID key
             folder.Key = source.Key;
+            folder.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
 
             // Save the media to the database
             MediaService.Save(folder, MigrationUserId);
@@ -181,6 +198,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
             IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, source.ContentTypeAlias, MigrationUserId);
             m.Key = source.Key;
+            m.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
 
             Stream stream = System.IO.File.OpenRead(mediaPath);
 
@@ -239,6 +257,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
             IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, source.ContentTypeAlias, MigrationUserId);
             m.Key = source.Key;
+            m.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
 
             Stream stream = System.IO.File.OpenRead(mediaPath);
 
@@ -324,7 +343,7 @@ namespace Limbo.Umbraco.Migrations.Services {
                 try {
                     return converter.Convert(owner, property);
                 } catch (Exception ex) {
-                    throw new MigrationsConvertPropertyException(owner, property, $"Failed converting value of property with alias '{property.Alias}' on page with ID {owner.Id}...", ex);
+                    throw new MigrationsConvertPropertyException(owner, property, $"Failed converting value of property with alias '{property.Alias}' on page with key {owner.Key}...", ex);
                 }
             }
 
@@ -365,13 +384,15 @@ namespace Limbo.Umbraco.Migrations.Services {
             return StaticServiceProvider.Instance.GetRequiredService<IUmbracoContextAccessor>().GetRequiredUmbracoContext().Content!.GetContentType(alias)!;
         }
 
-        public virtual bool TryParseUdi(string value, [NotNullWhen(true)] out GuidUdi? result) {
-            bool _ = UdiParser.TryParse(value, out Udi? udi);
+        public virtual bool TryParseUdi(string? value, [NotNullWhen(true)] out GuidUdi? result) {
+            bool _ = UdiParser.TryParse(value ?? string.Empty, out Udi? udi);
             result = udi as GuidUdi;
             return result is not null;
         }
 
-        public virtual string? ConvertRte(string source) {
+        public virtual string? ConvertRte(string? source) {
+
+            if (string.IsNullOrWhiteSpace(source)) return null;
 
             if (source.Contains("umb://media/")) {
 
