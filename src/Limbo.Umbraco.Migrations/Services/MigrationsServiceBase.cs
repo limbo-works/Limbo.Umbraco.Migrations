@@ -37,7 +37,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         public IMediaService MediaService => Dependencies.MediaService;
 
-        public IMigrationsHttpClient MigrationsHttpClient => Dependencies.MigrationsHttpClient;
+        public IMigrationsClient MigrationsClient => Dependencies.MigrationsClient;
 
         public int MigrationUserId { get; protected set; } = Constants.Security.SuperUserId;
 
@@ -56,7 +56,7 @@ namespace Limbo.Umbraco.Migrations.Services {
         public virtual IContent? ImportContent(int id) {
 
             // Get the legacy content item from the old site
-            LegacyContent source = MigrationsHttpClient.GetContentById(id).Body;
+            LegacyContent source = MigrationsClient.GetContentById(id);
 
             // Check whether the content item already exists
             IContent? content = ContentService.GetById(source.Key);
@@ -74,7 +74,7 @@ namespace Limbo.Umbraco.Migrations.Services {
             if (content is not null) return content;
 
             // Get the legacy content item from the old site
-            LegacyContent source = MigrationsHttpClient.GetContentByKey(key).Body;
+            LegacyContent source = MigrationsClient.GetContentByKey(key);
 
             return ImportContent(source);
 
@@ -107,7 +107,7 @@ namespace Limbo.Umbraco.Migrations.Services {
         public virtual IMedia? ImportMedia(int id) {
 
             // Get the legacy media item from the old site
-            LegacyMedia source = MigrationsHttpClient.GetMediaById(id).Body;
+            LegacyMedia source = MigrationsClient.GetMediaById(id);
 
             // Check whether the media item already exists
             IMedia? media = MediaService.GetById(source.Key);
@@ -125,7 +125,7 @@ namespace Limbo.Umbraco.Migrations.Services {
             if (media is not null) return media;
 
             // Get the legacy media item from the old site
-            LegacyMedia source = MigrationsHttpClient.GetMediaByKey(key).Body;
+            LegacyMedia source = MigrationsClient.GetMediaByKey(key);
 
             // Import the media
             return ImportMedia(source);
@@ -137,11 +137,11 @@ namespace Limbo.Umbraco.Migrations.Services {
             // Determine the parent (it will be imported if it hasn't already been imported)
             var parent = source.Path.Count == 0 ? null : ImportMedia(source.Path.Last().Key);
 
-            return source.Type switch {
+            return source.ContentTypeAlias switch {
                 "Folder" => ImportMediaFolder(source, parent),
                 "Image" => ImportMediaImage(source, parent),
                 "File" => ImportMediaFile(source, parent),
-                _ => throw new Exception($"Unsupported media type: {source.Type}")
+                _ => throw new Exception($"Unsupported media type: {source.ContentTypeAlias}")
             };
 
         }
@@ -176,9 +176,9 @@ namespace Limbo.Umbraco.Migrations.Services {
             string mediaPath = Path.Combine(tempDir, Guid.NewGuid().ToString());
             string filename = Path.GetFileName(umbracoFilePath);
 
-            MigrationsHttpClient.DownloadBytes(source, mediaPath);
+            MigrationsClient.DownloadBytes(source, mediaPath);
 
-            IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, source.Type, MigrationUserId);
+            IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, source.ContentTypeAlias, MigrationUserId);
             m.Key = source.Key;
 
             Stream stream = System.IO.File.OpenRead(mediaPath);
@@ -234,9 +234,9 @@ namespace Limbo.Umbraco.Migrations.Services {
             string mediaPath = Path.Combine(tempDir, Guid.NewGuid().ToString());
             string filename = Path.GetFileName(umbracoFilePath);
 
-            MigrationsHttpClient.DownloadBytes(source, mediaPath);
+            MigrationsClient.DownloadBytes(source, mediaPath);
 
-            IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, source.Type, MigrationUserId);
+            IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, source.ContentTypeAlias, MigrationUserId);
             m.Key = source.Key;
 
             Stream stream = System.IO.File.OpenRead(mediaPath);
@@ -270,18 +270,18 @@ namespace Limbo.Umbraco.Migrations.Services {
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <returns>The new content type alias for <paramref name="entity"/>.</returns>
-        public virtual string GetContentTypeAlias(LegacyEntity entity) {
-            return entity.Type;
+        public virtual string GetContentTypeAlias(ILegacyElement entity) {
+            return entity.ContentTypeAlias;
         }
 
-        public virtual string GetPropertyAlias(LegacyEntity entity, LegacyProperty property) {
+        public virtual string GetPropertyAlias(ILegacyElement entity, ILegacyProperty property) {
             return property.Alias;
         }
 
-        protected virtual void ConvertProperties(LegacyEntity entity, IContentBase content) {
+        protected virtual void ConvertProperties(ILegacyElement entity, IContentBase content) {
 
             // Convert the individual properties
-            foreach (LegacyProperty property in entity.Properties) {
+            foreach (ILegacyProperty property in entity.Properties) {
 
                 // Determine the new property alias (usually the same)
                 string propertyAlias = GetPropertyAlias(entity, property);
@@ -316,7 +316,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         }
 
-        public virtual object? ConvertPropertyValue(LegacyEntity owner, LegacyProperty property) {
+        public virtual object? ConvertPropertyValue(ILegacyElement owner, ILegacyProperty property) {
 
             // Look for a converter that knows how to convert the property value
             if (Dependencies.PropertyConverterCollection.FirstOrDefault(x => x.IsConverter(property)) is { } converter) {
@@ -329,7 +329,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
             StringBuilder sb = new();
             sb.AppendLine($"Unknown property editor alias: {property.EditorAlias}");
-            sb.AppendLine("Content type: " + owner.Type);
+            sb.AppendLine("Content type: " + owner.ContentTypeAlias);
             sb.AppendLine("Property: " + property.Alias);
             sb.AppendLine("Value Type: " + (property.Value.GetType().FullName ?? "NULL"));
             sb.AppendLine("Token Type: " + property.Value.Type);

@@ -5,6 +5,7 @@ using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
 using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Json.Newtonsoft;
 using Skybrud.Umbraco.GridData.Factories;
@@ -17,16 +18,16 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
         private readonly IGridFactory _gridFactory;
         private readonly GridControlConverterCollection _gridControlConverters;
 
-        public UmbracoGridConverter(IMigrationsService migrationsService, IMigrationsHttpClient migrationsHttpClient, IGridFactory gridFactory, GridControlConverterCollection gridControlConverters) : base(migrationsService, migrationsHttpClient) {
+        public UmbracoGridConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient, IGridFactory gridFactory, GridControlConverterCollection gridControlConverters) : base(migrationsService, migrationsClient) {
             _gridFactory = gridFactory;
             _gridControlConverters = gridControlConverters;
         }
 
-        public override bool IsConverter(LegacyProperty property) {
+        public override bool IsConverter(ILegacyProperty property) {
             return property.EditorAlias is "Umbraco.Grid";
         }
 
-        public override object? Convert(LegacyEntity owner, LegacyProperty property) {
+        public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
 
             if (!JsonUtils.TryParseJsonObject(property.Value.ToString(), out JObject? json)) return null;
 
@@ -60,7 +61,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
         }
 
-        protected virtual void ConvertGridControl(LegacyEntity owner, GridControl control, BlockListModel blockList) {
+        protected virtual void ConvertGridControl(ILegacyElement owner, GridControl control, BlockListModel blockList) {
 
             // Look for a converter that knows how to convert the grid control
             if (_gridControlConverters.FirstOrDefault(x => x.IsConverter(control)) is { } converter) {

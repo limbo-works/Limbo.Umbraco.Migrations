@@ -10,16 +10,16 @@ namespace Limbo.Umbraco.Migrations.Converters.Grid {
 
         public IMigrationsService MigrationsService { get; }
 
-        public IMigrationsHttpClient MigrationsHttpClient { get; }
+        public IMigrationsClient MigrationsClient { get; }
 
-        protected GridControlConverterBase(IMigrationsService migrationsService, IMigrationsHttpClient migrationsHttpClient) {
+        protected GridControlConverterBase(IMigrationsService migrationsService, IMigrationsClient migrationsClient) {
             MigrationsService = migrationsService;
-            MigrationsHttpClient = migrationsHttpClient;
+            MigrationsClient = migrationsClient;
         }
 
         public abstract bool IsConverter(GridControl control);
 
-        public abstract void Convert(LegacyEntity owner, GridControl control, BlockListModel blockList);
+        public abstract void Convert(ILegacyElement owner, GridControl control, BlockListModel blockList);
 
     }
 

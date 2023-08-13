@@ -1,6 +1,7 @@
 ﻿using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
 
 namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
@@ -8,16 +9,16 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
         public IMigrationsService MigrationsService { get; }
 
-        public IMigrationsHttpClient MigrationsHttpClient { get; }
+        public IMigrationsClient MigrationsClient { get; }
 
-        protected PropertyConverterBase(IMigrationsService migrationsService, IMigrationsHttpClient migrationsHttpClient) {
+        protected PropertyConverterBase(IMigrationsService migrationsService, IMigrationsClient migrationsClient) {
             MigrationsService = migrationsService;
-            MigrationsHttpClient = migrationsHttpClient;
+            MigrationsClient = migrationsClient;
         }
 
-        public abstract bool IsConverter(LegacyProperty property);
+        public abstract bool IsConverter(ILegacyProperty property);
 
-        public abstract object? Convert(LegacyEntity owner, LegacyProperty property);
+        public abstract object? Convert(ILegacyElement owner, ILegacyProperty property);
 
     }
 

@@ -25,7 +25,7 @@ namespace Limbo.Umbraco.Migrations.Services {
         public IContentTypeBaseServiceProvider ContentTypeBaseServiceProvider { get; }
         public IGridFactory GridFactory { get; }
         public GridControlConverterCollection GridControlConverters { get; }
-        public IMigrationsHttpClient MigrationsHttpClient { get; }
+        public IMigrationsClient MigrationsClient { get; }
 
         public MigrationsServiceDependencies(IConfiguration configuration,
             IWebHostEnvironment webHostEnvironment,
@@ -39,7 +39,7 @@ namespace Limbo.Umbraco.Migrations.Services {
             IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
             IGridFactory gridFactory,
             GridControlConverterCollection gridControlConverters,
-            IMigrationsHttpClient migrationsHttpClient) {
+            IMigrationsClient migrationsClient) {
             Configuration = configuration;
             WebHostEnvironment = webHostEnvironment;
             ContentService = contentService;
@@ -52,7 +52,7 @@ namespace Limbo.Umbraco.Migrations.Services {
             ContentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
             GridFactory = gridFactory;
             GridControlConverters = gridControlConverters;
-            MigrationsHttpClient = migrationsHttpClient;
+            MigrationsClient = migrationsClient;
         }
 
     }

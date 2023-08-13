@@ -1,14 +1,15 @@
 ﻿using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
 
 namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
     public class NullConverter : PropertyConverterBase {
 
-        public NullConverter(IMigrationsService migrationsService, IMigrationsHttpClient migrationsHttpClient) : base(migrationsService, migrationsHttpClient) { }
+        public NullConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
-        public override bool IsConverter(LegacyProperty property) {
+        public override bool IsConverter(ILegacyProperty property) {
             return property.EditorAlias switch {
                 "CodeMonkey.Seperator" => true,
                 "Skybrud.Umbraco.Redirects" => true,
@@ -18,7 +19,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
             };
         }
 
-        public override object? Convert(LegacyEntity owner, LegacyProperty property) {
+        public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
             return null;
         }
 

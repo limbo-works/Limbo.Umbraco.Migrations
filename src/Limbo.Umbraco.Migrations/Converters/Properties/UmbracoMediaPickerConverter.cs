@@ -3,6 +3,7 @@ using Limbo.Umbraco.Migrations.Models.MediaPicker;
 using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Security;
@@ -14,13 +15,13 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
     public class UmbracoMediaPickerConverter : PropertyConverterBase {
 
-        public UmbracoMediaPickerConverter(IMigrationsService migrationsService, IMigrationsHttpClient migrationsHttpClient) : base(migrationsService, migrationsHttpClient) { }
+        public UmbracoMediaPickerConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
-        public override bool IsConverter(LegacyProperty property) {
+        public override bool IsConverter(ILegacyProperty property) {
             return property.EditorAlias is "Umbraco.MediaPicker2";
         }
 
-        public override object? Convert(LegacyEntity owner, LegacyProperty property) {
+        public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
 
             // Get the value as a string
             string value = property.Value.ToString();

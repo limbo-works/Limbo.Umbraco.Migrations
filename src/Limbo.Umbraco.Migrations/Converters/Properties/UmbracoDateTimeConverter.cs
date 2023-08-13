@@ -3,18 +3,19 @@ using System;
 using Limbo.Umbraco.MigrationsClient.Models;
 using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
 
 namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
     public class UmbracoDateTimeConverter : PropertyConverterBase {
 
-        public UmbracoDateTimeConverter(IMigrationsService migrationsService, IMigrationsHttpClient migrationsHttpClient) : base(migrationsService, migrationsHttpClient) { }
+        public UmbracoDateTimeConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
-        public override bool IsConverter(LegacyProperty property) {
+        public override bool IsConverter(ILegacyProperty property) {
             return property.EditorAlias is "Umbraco.Date" or "Umbraco.DateTime";
         }
 
-        public override object? Convert(LegacyEntity owner, LegacyProperty property) {
+        public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
 
             // Get the value as a string
             string value = property.Value.ToString();

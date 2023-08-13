@@ -1,4 +1,5 @@
 ﻿using Limbo.Umbraco.MigrationsClient.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
 
 namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
@@ -9,15 +10,15 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
         /// </summary>
         /// <param name="property">The property.</param>
         /// <returns><see langword="true"/> if a converter for <paramref name="property"/>; otherwise, <see langword="false"/>.</returns>
-        bool IsConverter(LegacyProperty property);
+        bool IsConverter(ILegacyProperty property);
 
         /// <summary>
         /// Returns the converted value from the specified <paramref name="property"/>.
         /// </summary>
-        /// <param name="owner">The entity holding the property.</param>
+        /// <param name="owner">The element holding the property.</param>
         /// <param name="property">The property.</param>
         /// <returns>Tthe converted property value.</returns>
-        object? Convert(LegacyEntity owner, LegacyProperty property);
+        object? Convert(ILegacyElement owner, ILegacyProperty property);
 
     }
 

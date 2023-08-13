@@ -11,7 +11,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Grid {
 
         public bool IsConverter(GridControl control);
 
-        public void Convert(LegacyEntity owner, GridControl control, BlockListModel blockList);
+        public void Convert(ILegacyElement owner, GridControl control, BlockListModel blockList);
 
     }
 
