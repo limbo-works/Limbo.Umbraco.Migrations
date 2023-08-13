@@ -7,6 +7,8 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
     [JsonConverter(typeof(BlockListModelJsonConverter))]
     public class BlockListModel {
 
+        public int Count => Items.Count;
+
         public List<BlockListItem> Items { get; } = new();
 
         public BlockListModel AddItem(BlockListItem item) {

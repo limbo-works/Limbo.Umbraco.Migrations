@@ -343,12 +343,14 @@ namespace Limbo.Umbraco.Migrations.Services {
             return null;
         }
 
-        public virtual BlockListContentData CreateBlockListContentData<T>(Guid key) where T : PublishedElementModel {
-            return new BlockListContentData(key, GetModelType<T>());
+        public virtual BlockListContentData<T> CreateBlockListContentData<T>(Guid key) where T : PublishedElementModel {
+            Type type = typeof(BlockListContentData<>).MakeGenericType(typeof(T));
+            return (BlockListContentData<T>) Activator.CreateInstance(type, key, GetModelType<T>())!;
         }
 
-        public virtual BlockListContentData CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel {
-            return new BlockListContentData(control, GetModelType<T>());
+        public virtual BlockListContentData<T> CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel {
+            Type type = typeof(BlockListContentData<>).MakeGenericType(typeof(T));
+            return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
         }
 
         public virtual BlockListSettingsData CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel {
@@ -447,6 +449,65 @@ namespace Limbo.Umbraco.Migrations.Services {
             }
 
             return source;
+
+        }
+
+        public virtual BlockListModel ConvertNestedContentToBlockList(NestedContentModel nestedContent) {
+            return ConvertNestedContentToBlockList(null, null, nestedContent);
+        }
+
+        public virtual BlockListModel ConvertNestedContentToBlockList(ILegacyElement? owner, ILegacyProperty? property,  NestedContentModel nestedContent) {
+
+            BlockListModel blockList = new();
+
+            foreach (NestedContentItem item in nestedContent) {
+
+                // Get the referenced content type
+                LegacyContentType contentType = MigrationsClient.GetContentTypeByAlias(item.ContentTypeAlias);
+
+                // Wrap the item and content type as an element
+                NestedContentElement element = new(item, contentType);
+
+                // Convert the Nested Content item to a corresponding Block List item
+                BlockListItem? blockListItem = ConvertNestedContentItemToBlockListItem(owner, property, element);
+                if (blockListItem != null) blockList.AddItem(blockListItem);
+
+            }
+
+            return blockList;
+
+        }
+
+        public virtual BlockListItem? ConvertNestedContentItemToBlockListItem(ILegacyElement? owner, ILegacyProperty? property, NestedContentElement element) {
+
+            // Get the alias of the new content type
+            string contentTypeAlias = GetContentTypeAlias(element);
+
+            // Get a reference to the published content type
+            var contentType = Dependencies.UmbracoContext.Content?.GetContentType(contentTypeAlias);
+            if (contentType is null) throw new MigrationsException($"Content type with alias '{contentTypeAlias}' not found.");
+
+            // Initialize a new block list content part
+            BlockListContentData content = new(element.Key, contentType);
+
+            if (!element.HasProperty("name") && contentType.PropertyTypes.FirstOrDefault(x => x.Alias == "name") is not null) {
+                content.Properties["name"] = element.Name;
+            }
+
+            foreach (ILegacyProperty p in element.Properties) {
+
+                // Get the new content type alias
+                string propertyAlias = GetPropertyAlias(element, p);
+
+                // Convert the property value
+                object? value = ConvertPropertyValue(element, p);
+
+                // Set the property value (it not null)
+                if (value is not null) content.Properties[propertyAlias] = value;
+
+            }
+
+            return new BlockListItem(content);
 
         }
 

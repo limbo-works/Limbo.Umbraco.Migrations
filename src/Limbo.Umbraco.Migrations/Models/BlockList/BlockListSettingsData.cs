@@ -39,6 +39,8 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
         }
 
         public BlockListSettingsData Add(string name, object? value) {
+            if (value is null) return this;
+            if (value is string str && string.IsNullOrWhiteSpace(str)) return this;
             Properties.Add(name, value);
             return this;
         }

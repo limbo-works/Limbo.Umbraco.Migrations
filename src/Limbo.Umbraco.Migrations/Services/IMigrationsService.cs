@@ -24,9 +24,9 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         BlockListSettingsData? CreateDefaultBlockListSettings(GridControl control);
 
-        BlockListContentData? CreateBlockListContentData<T>(Guid key) where T : PublishedElementModel;
+        BlockListContentData<T> CreateBlockListContentData<T>(Guid key) where T : PublishedElementModel;
 
-        BlockListContentData CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel;
+        BlockListContentData<T> CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel;
 
         BlockListSettingsData CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel;
 
