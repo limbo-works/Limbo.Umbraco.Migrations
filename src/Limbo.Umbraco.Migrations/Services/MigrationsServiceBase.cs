@@ -10,9 +10,10 @@ using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Content;
 using Limbo.Umbraco.MigrationsClient.Models.ContentTypes;
+using Limbo.Umbraco.MigrationsClient.Models.Media;
 using Limbo.Umbraco.MigrationsClient.Models.Properties;
-using Limbo.Umbraco.MigrationsClient.Models.Skybrud;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
 using Limbo.Umbraco.MigrationsClient.Models.Umbraco.NestedContent;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +21,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Json.Newtonsoft;
 using Skybrud.Essentials.Json.Newtonsoft.Extensions;
+using Skybrud.Essentials.Strings;
 using Skybrud.Essentials.Strings.Extensions;
 using Skybrud.Umbraco.GridData.Models;
+using StackExchange.Profiling.Data;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Extensions;
 using Umbraco.Cms.Core.Models;
@@ -47,7 +50,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         public IMigrationsClient MigrationsClient => Dependencies.MigrationsClient;
 
-        public int MigrationUserId { get; protected set; } = Constants.Security.SuperUserId;
+        public int MigrationUserId { get; protected set; } = global::Umbraco.Cms.Core.Constants.Security.SuperUserId;
 
         protected HashSet<int> IgnoredIds { get; } = new();
 
@@ -189,7 +192,7 @@ namespace Limbo.Umbraco.Migrations.Services {
             if (string.IsNullOrWhiteSpace(umbracoFilePath)) throw new Exception($"Media with key {source.Key} and doesn't have a valid path.\r\n\r\n" + source.JObject);
 
             // Map the path to the TEMP dir
-            string tempDir = Dependencies.WebHostEnvironment.MapPathContentRoot($"{Constants.SystemDirectories.TempData}/Limbo.Umbraco.Migrations");
+            string tempDir = Dependencies.WebHostEnvironment.MapPathContentRoot($"{(global::Umbraco.Cms.Core.Constants.SystemDirectories.TempData)}/Limbo.Umbraco.Migrations");
 
             string mediaPath = Path.Combine(tempDir, Guid.NewGuid().ToString());
             string filename = Path.GetFileName(umbracoFilePath);
@@ -207,7 +210,7 @@ namespace Limbo.Umbraco.Migrations.Services {
                 Dependencies.MediaUrlGeneratorCollection,
                 Dependencies.ShortStringHelper,
                 Dependencies.ContentTypeBaseServiceProvider,
-                Constants.Conventions.Media.File,
+                global::Umbraco.Cms.Core.Constants.Conventions.Media.File,
                 filename,
                 stream
             );
@@ -216,18 +219,18 @@ namespace Limbo.Umbraco.Migrations.Services {
 
             // For images, add the focal point to the "umbracoFile" property
             if (left is not null && top is not null) {
-                string umbracoFileRaw = m.GetValue<string>(Constants.Conventions.Media.File)!;
+                string umbracoFileRaw = m.GetValue<string>(global::Umbraco.Cms.Core.Constants.Conventions.Media.File)!;
                 if (umbracoFileRaw.StartsWith("/media/")) {
                     var umb = new JObject {
                         {"src", umbracoFileRaw},
                         { "focalPoint", new JObject {{ "left",left.Value}, {"top",top.Value }}}
                     };
-                    m.SetValue(Constants.Conventions.Media.File, umb.ToString(Formatting.None));
+                    m.SetValue(global::Umbraco.Cms.Core.Constants.Conventions.Media.File, umb.ToString(Formatting.None));
                 } else if (JsonUtils.TryParseJsonObject(umbracoFileRaw, out JObject? umbracoFile)) {
                     umbracoFile.Add(new JObject {
                         { "focalPoint", new JObject {{ "left",left.Value}, {"top",top.Value }}}
                     });
-                    m.SetValue(Constants.Conventions.Media.File, umbracoFile.ToString(Formatting.None));
+                    m.SetValue(global::Umbraco.Cms.Core.Constants.Conventions.Media.File, umbracoFile.ToString(Formatting.None));
                     throw new Exception(umbracoFile.ToString(Formatting.Indented));
                 }
             }
@@ -248,7 +251,7 @@ namespace Limbo.Umbraco.Migrations.Services {
             if (string.IsNullOrWhiteSpace(umbracoFilePath)) throw new Exception($"Media with key {source.Key} and doesn't have a valid path.\r\n\r\n" + source.JObject);
 
             // Map the path to the TEMP dir
-            string tempDir = Dependencies.WebHostEnvironment.MapPathContentRoot($"{Constants.SystemDirectories.TempData}/Limbo.Umbraco.Migrations");
+            string tempDir = Dependencies.WebHostEnvironment.MapPathContentRoot($"{(global::Umbraco.Cms.Core.Constants.SystemDirectories.TempData)}/Limbo.Umbraco.Migrations");
 
             string mediaPath = Path.Combine(tempDir, Guid.NewGuid().ToString());
             string filename = Path.GetFileName(umbracoFilePath);
@@ -266,7 +269,7 @@ namespace Limbo.Umbraco.Migrations.Services {
                 Dependencies.MediaUrlGeneratorCollection,
                 Dependencies.ShortStringHelper,
                 Dependencies.ContentTypeBaseServiceProvider,
-                Constants.Conventions.Media.File,
+                global::Umbraco.Cms.Core.Constants.Conventions.Media.File,
                 filename,
                 stream
             );
@@ -394,83 +397,141 @@ namespace Limbo.Umbraco.Migrations.Services {
 
             if (string.IsNullOrWhiteSpace(source)) return null;
 
-            if (source.Contains("umb://media/")) {
+            HtmlDocument document = new();
+            document.LoadHtml(source);
 
-                HtmlDocument document = new();
-                document.LoadHtml(source);
+            bool modified = false;
+
+            ConvertRteImages(document.DocumentNode, ref modified);
+            ConvertRteLinks(document.DocumentNode, ref modified);
+
+            if (source.Contains("umb://media/")) {
 
                 var links = document.DocumentNode.Descendants("a");
                 var images = document.DocumentNode.Descendants("img");
 
-                bool modified = false;
+                //if (links is not null) {
 
-                if (links is not null) {
+                //    foreach (var link in links) {
 
-                    foreach (var link in links) {
+                //        string dataUdi = link.GetAttributeValue("data-udi", "");
 
-                        string dataUdi = link.GetAttributeValue("data-udi", "");
+                //        if (!dataUdi.StartsWith("umb://media/")) continue;
 
-                        if (!dataUdi.StartsWith("umb://media/")) continue;
+                //        Guid mediaKey = Guid.Parse(dataUdi[12..]);
 
-                        Guid mediaKey = Guid.Parse(dataUdi[12..]);
+                //        IMedia? media = ImportMedia(mediaKey);
+                //        if (media is null) continue;
 
-                        IMedia? media = ImportMedia(mediaKey);
-                        if (media is null) continue;
+                //        string? mediaUrl = media.GetValue<string>("umbracoFile");
 
-                        string? mediaUrl = media.GetValue<string>("umbracoFile");
+                //        if (string.IsNullOrWhiteSpace(mediaUrl)) {
+                //            throw new Exception("Media doesn't specify a valid file path.");
+                //        }
+                //        if (JsonUtils.TryParseJsonObject(mediaUrl, out JObject? mediaUrlJson)) {
+                //            mediaUrl = mediaUrlJson.GetString("src")!;
+                //        }
 
-                        if (string.IsNullOrWhiteSpace(mediaUrl)) {
-                            throw new Exception("Media doesn't specify a valid file path.");
-                        }
-                        if (JsonUtils.TryParseJsonObject(mediaUrl, out JObject? mediaUrlJson)) {
-                            mediaUrl = mediaUrlJson.GetString("src")!;
-                        }
+                //        if (!mediaUrl.StartsWith("/media/")) throw new Exception("Not sure how to parse \"umbracoFile\" property value.\r\n\r\n" + mediaUrl);
 
-                        if (!mediaUrl.StartsWith("/media/")) throw new Exception("Not sure how to parse \"umbracoFile\" property value.\r\n\r\n" + mediaUrl);
+                //        link.SetAttributeValue("href", mediaUrl);
+                //        modified = true;
 
-                        link.SetAttributeValue("href", mediaUrl);
-                        modified = true;
+                //    }
+                //}
 
-                    }
-                }
+                //if (images is not null) {
 
-                if (images is not null) {
+                //    foreach (HtmlNode node in images) {
 
-                    foreach (HtmlNode node in images) {
+                //        string dataUdi = node.GetAttributeValue("data-udi", "");
+                //        if (!dataUdi.StartsWith("umb://media/")) continue;
 
-                        string dataUdi = node.GetAttributeValue("data-udi", "");
-                        if (!dataUdi.StartsWith("umb://media/")) continue;
+                //        Guid mediaKey = Guid.Parse(dataUdi[12..]);
 
-                        Guid mediaKey = Guid.Parse(dataUdi[12..]);
+                //        IMedia? media = ImportMedia(mediaKey);
+                //        if (media is null) continue;
 
-                        IMedia? media = ImportMedia(mediaKey);
-                        if (media is null) continue;
+                //        string? mediaUrl = media.GetValue<string>("umbracoFile");
 
-                        string? mediaUrl = media.GetValue<string>("umbracoFile");
+                //        if (string.IsNullOrWhiteSpace(mediaUrl)) {
+                //            throw new Exception("Media doesn't specify a valid file path.");
+                //        }
 
-                        if (string.IsNullOrWhiteSpace(mediaUrl)) {
-                            throw new Exception("Media doesn't specify a valid file path.");
-                        }
+                //        if (JsonUtils.TryParseJsonObject(mediaUrl, out JObject? mediaUrlJson)) {
+                //            mediaUrl = mediaUrlJson.GetString("src");
+                //        }
 
-                        if (JsonUtils.TryParseJsonObject(mediaUrl, out JObject? mediaUrlJson)) {
-                            mediaUrl = mediaUrlJson.GetString("src");
-                        }
+                //        if (mediaUrl is null || !mediaUrl.StartsWith("/media/")) throw new Exception("Not sure hot to parse \"umbracoFile\" property value.\r\n\r\n" + mediaUrl);
 
-                        if (mediaUrl is null || !mediaUrl.StartsWith("/media/")) throw new Exception("Not sure hot to parse \"umbracoFile\" property value.\r\n\r\n" + mediaUrl);
+                //        node.SetAttributeValue("src", mediaUrl);
+                //        modified = true;
 
-                        node.SetAttributeValue("src", mediaUrl);
-                        modified = true;
+                //    }
 
-                    }
-                }
-
-                if (modified) {
-                    source = document.DocumentNode.OuterHtml;
-                }
+                //}
 
             }
 
+            if (modified) {
+                source = document.DocumentNode.OuterHtml;
+            }
+
             return source;
+
+        }
+
+        protected virtual void ConvertRteLink(HtmlNode link, ref bool modified) {
+
+            string href = link.GetAttributeValue("href", "");
+
+            if (RegexUtils.IsMatch(href, "/{localLink:([0-9]+)}", out int id)) {
+
+                // Skip if ignored (eg. if trashed)
+                if (IgnoredIds.Contains(id)) return;
+
+                LegacyContent content;
+                try {
+                    content = MigrationsClient.GetContentById(id);
+                } catch (Exception ex) {
+                    throw new MigrationsException($"Failed getting content with ID {id}...", ex);
+                }
+
+                link.SetAttributeValue("href", $"/{{localLink:umb://document/{content.Key:N}}}");
+                link.Attributes["data-id"]?.Remove();
+
+                modified = true;
+                return;
+
+            }
+
+        }
+
+        protected virtual void ConvertRteLinks(HtmlNode root, ref bool modified) {
+
+            IEnumerable<HtmlNode>? anchorLinks = root.Descendants("a");
+            if (anchorLinks is null) return;
+
+            foreach (HtmlNode link in anchorLinks) {
+                ConvertRteLink(link, ref modified);
+            }
+
+        }
+
+        protected virtual void ConvertRteImage(HtmlNode img, ref bool modified) {
+
+            throw new Exception("Found <img /> element\r\n\r\n" + img.OuterHtml + "\r\n\r\n");
+
+        }
+
+        protected virtual void ConvertRteImages(HtmlNode root, ref bool modified) {
+
+            IEnumerable<HtmlNode>? images = root.Descendants("img");
+            if (images is null) return;
+
+            foreach (HtmlNode img in images) {
+                ConvertRteImage(img, ref modified);
+            }
 
         }
 
@@ -561,7 +622,7 @@ namespace Limbo.Umbraco.Migrations.Services {
                 case LinkPickerMode.Content:
                     try {
                         LegacyContent content = MigrationsClient.GetContentById(item.Id);
-                        return UrlPickerItem.CreateContentItem(item.Name, new GuidUdi(Constants.UdiEntityType.Document, content.Key), item.Url, target);
+                        return UrlPickerItem.CreateContentItem(item.Name, new GuidUdi(global::Umbraco.Cms.Core.Constants.UdiEntityType.Document, content.Key), item.Url, target);
                     } catch (Exception ex) {
                         throw new Exception($"Failed getting content with ID {item.Id}...", ex);
                     }
