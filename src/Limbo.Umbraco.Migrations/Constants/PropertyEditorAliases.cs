@@ -5,6 +5,8 @@
     /// </summary>
     public static class PropertyEditorAliases {
 
+        public const string Archetype = "Imulus.Archetype";
+
         public static class NuPickers {
 
             public const string DotNetCheckBoxPicker = "nuPickers.DotNetCheckBoxPicker";
@@ -18,8 +20,6 @@
             public const string LinkPicker = "Skybrud.LinkPicker";
 
         }
-
-        public const string Archetype = "Imulus.Archetype";
 
         public static class Umbraco {
 
