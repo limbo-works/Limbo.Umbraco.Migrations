@@ -21,6 +21,15 @@
 
         public const string Archetype = "Imulus.Archetype";
 
+        public static class Umbraco {
+
+            /// <summary>
+            /// Gets the alias of the Umbraco 7 content picker property editor.
+            /// </summary>
+            public const string ContentPicker = "Umbraco.ContentPickerAlias";
+
+        }
+
     }
 
 }
