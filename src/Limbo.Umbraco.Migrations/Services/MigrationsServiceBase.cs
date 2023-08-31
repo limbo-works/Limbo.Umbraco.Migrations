@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using HtmlAgilityPack;
+using Limbo.Umbraco.Migrations.Constants;
 using Limbo.Umbraco.Migrations.Exceptions;
 using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
@@ -24,7 +25,6 @@ using Skybrud.Essentials.Json.Newtonsoft.Extensions;
 using Skybrud.Essentials.Strings;
 using Skybrud.Essentials.Strings.Extensions;
 using Skybrud.Umbraco.GridData.Models;
-using StackExchange.Profiling.Data;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Extensions;
 using Umbraco.Cms.Core.Models;
@@ -395,148 +395,6 @@ namespace Limbo.Umbraco.Migrations.Services {
             bool _ = UdiParser.TryParse(value ?? string.Empty, out Udi? udi);
             result = udi as GuidUdi;
             return result is not null;
-        }
-
-        public virtual string? ConvertRte(string? source) {
-
-            if (string.IsNullOrWhiteSpace(source)) return null;
-
-            HtmlDocument document = new();
-            document.LoadHtml(source);
-
-            bool modified = false;
-
-            ConvertRteImages(document.DocumentNode, ref modified);
-            ConvertRteLinks(document.DocumentNode, ref modified);
-
-            if (source.Contains("umb://media/")) {
-
-                var links = document.DocumentNode.Descendants("a");
-                var images = document.DocumentNode.Descendants("img");
-
-                //if (links is not null) {
-
-                //    foreach (var link in links) {
-
-                //        string dataUdi = link.GetAttributeValue("data-udi", "");
-
-                //        if (!dataUdi.StartsWith("umb://media/")) continue;
-
-                //        Guid mediaKey = Guid.Parse(dataUdi[12..]);
-
-                //        IMedia? media = ImportMedia(mediaKey);
-                //        if (media is null) continue;
-
-                //        string? mediaUrl = media.GetValue<string>("umbracoFile");
-
-                //        if (string.IsNullOrWhiteSpace(mediaUrl)) {
-                //            throw new Exception("Media doesn't specify a valid file path.");
-                //        }
-                //        if (JsonUtils.TryParseJsonObject(mediaUrl, out JObject? mediaUrlJson)) {
-                //            mediaUrl = mediaUrlJson.GetString("src")!;
-                //        }
-
-                //        if (!mediaUrl.StartsWith("/media/")) throw new Exception("Not sure how to parse \"umbracoFile\" property value.\r\n\r\n" + mediaUrl);
-
-                //        link.SetAttributeValue("href", mediaUrl);
-                //        modified = true;
-
-                //    }
-                //}
-
-                //if (images is not null) {
-
-                //    foreach (HtmlNode node in images) {
-
-                //        string dataUdi = node.GetAttributeValue("data-udi", "");
-                //        if (!dataUdi.StartsWith("umb://media/")) continue;
-
-                //        Guid mediaKey = Guid.Parse(dataUdi[12..]);
-
-                //        IMedia? media = ImportMedia(mediaKey);
-                //        if (media is null) continue;
-
-                //        string? mediaUrl = media.GetValue<string>("umbracoFile");
-
-                //        if (string.IsNullOrWhiteSpace(mediaUrl)) {
-                //            throw new Exception("Media doesn't specify a valid file path.");
-                //        }
-
-                //        if (JsonUtils.TryParseJsonObject(mediaUrl, out JObject? mediaUrlJson)) {
-                //            mediaUrl = mediaUrlJson.GetString("src");
-                //        }
-
-                //        if (mediaUrl is null || !mediaUrl.StartsWith("/media/")) throw new Exception("Not sure hot to parse \"umbracoFile\" property value.\r\n\r\n" + mediaUrl);
-
-                //        node.SetAttributeValue("src", mediaUrl);
-                //        modified = true;
-
-                //    }
-
-                //}
-
-            }
-
-            if (modified) {
-                source = document.DocumentNode.OuterHtml;
-            }
-
-            return source;
-
-        }
-
-        protected virtual void ConvertRteLink(HtmlNode link, ref bool modified) {
-
-            string href = link.GetAttributeValue("href", "");
-
-            if (RegexUtils.IsMatch(href, "/{localLink:([0-9]+)}", out int id)) {
-
-                // Skip if ignored (eg. if trashed)
-                if (IgnoredIds.Contains(id)) return;
-
-                LegacyContent content;
-                try {
-                    content = MigrationsClient.GetContentById(id);
-                } catch (Exception ex) {
-                    throw new MigrationsException($"Failed getting content with ID {id}...", ex);
-                }
-
-                link.SetAttributeValue("href", $"/{{localLink:umb://document/{content.Key:N}}}");
-                link.Attributes["data-id"]?.Remove();
-
-                modified = true;
-                return;
-
-            }
-
-        }
-
-        protected virtual void ConvertRteLinks(HtmlNode root, ref bool modified) {
-
-            IEnumerable<HtmlNode>? anchorLinks = root.Descendants("a");
-            if (anchorLinks is null) return;
-
-            foreach (HtmlNode link in anchorLinks) {
-                ConvertRteLink(link, ref modified);
-            }
-
-        }
-
-        protected virtual void ConvertRteImage(HtmlNode img, ref bool modified) {
-
-            throw new Exception("Found <img /> element\r\n\r\n" + img.OuterHtml + "\r\n\r\n");
-
-        }
-
-        protected virtual void ConvertRteImages(HtmlNode root, ref bool modified) {
-
-            IEnumerable<HtmlNode>? images = root.Descendants("img");
-            if (images is null) return;
-
-            foreach (HtmlNode img in images) {
-                ConvertRteImage(img, ref modified);
-            }
-
         }
 
         public virtual BlockListModel ConvertNestedContentToBlockList(NestedContentModel nestedContent) {

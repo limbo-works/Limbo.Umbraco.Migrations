@@ -36,7 +36,7 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         bool TryParseUdi(string? value, [NotNullWhen(true)] out GuidUdi? result);
 
-        string? ConvertRte(string? text);
+        string? ConvertRte(string? input);
 
         UrlPickerList? ConvertLinkPickerList(LinkPickerList? list);
 
