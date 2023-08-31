@@ -38,7 +38,7 @@ using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.Migrations.Services {
 
-    public class MigrationsServiceBase : IMigrationsService {
+    public partial class MigrationsServiceBase : IMigrationsService {
 
         #region Properties
 
