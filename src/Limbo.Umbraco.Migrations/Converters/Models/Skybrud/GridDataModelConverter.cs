@@ -2,6 +2,7 @@
 using System.Linq;
 using Limbo.Umbraco.Migrations.Converters.Grid;
 using Limbo.Umbraco.Migrations.Models.BlockList;
+using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient.Models;
 using Limbo.Umbraco.MigrationsClient.Models.Properties;
 using Skybrud.Umbraco.GridData.Models;
@@ -12,9 +13,16 @@ public class GridDataModelConverter : IGridDataModelConverter {
 
     private readonly GridControlConverterCollection _gridControlConverters;
 
+    #region Properties
+
+    public IMigrationsService MigrationsService { get; }
+
+    #endregion
+
     #region Constructors
 
-    public GridDataModelConverter(GridControlConverterCollection gridControlConverters) {
+    public GridDataModelConverter(IMigrationsService migrationsService, GridControlConverterCollection gridControlConverters) {
+        MigrationsService = migrationsService;
         _gridControlConverters = gridControlConverters;
     }
 
