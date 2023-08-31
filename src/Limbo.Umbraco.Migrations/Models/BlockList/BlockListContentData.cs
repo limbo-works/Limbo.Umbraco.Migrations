@@ -42,13 +42,6 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
 
         }
 
-        public BlockListContentData Add(string name, object? value) {
-            if (value is null) return this;
-            if (value is string str && string.IsNullOrWhiteSpace(str)) return this;
-            Properties.Add(name, value);
-            return this;
-        }
-
         public BlockListContentData SetValue(string name, object? value) {
             if (value is null) return this;
             if (value is string str && string.IsNullOrWhiteSpace(str)) return this;
@@ -63,22 +56,6 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
         public BlockListContentData(Guid key, IPublishedContentType contentType) : base(key, contentType) { }
 
         public BlockListContentData(GridControl control, IPublishedContentType contentType) : base(control, contentType) { }
-
-        public BlockListContentData<TModel> Add<TProperty>(Expression<Func<TModel, TProperty>> selector, object? value) {
-
-            // Get the name/alias of the property
-            string alias = GetPropertyInfo(selector).Name;
-
-            // Not sure how much casing matters, so we better lookup the correct casing of the property type
-            IPublishedPropertyType? propertyType = ContentType.GetPropertyType(alias);
-            if (propertyType is null) throw new Exception($"Property type with alias '{alias}' not found for content type '{ContentType.Alias}'.");
-
-            // Set the property value
-            Add(propertyType.Alias, value);
-
-            return this;
-
-        }
 
         public BlockListContentData<TModel> SetValue<TProperty>(Expression<Func<TModel, TProperty>> selector, object? value) {
 
