@@ -376,6 +376,10 @@ namespace Limbo.Umbraco.Migrations.Services {
             return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
         }
 
+        public virtual BlockListSettingsData CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel {
+            return new BlockListSettingsData(key, GetModelType<T>());
+        }
+
         public virtual BlockListSettingsData CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel {
             return new BlockListSettingsData(control, GetModelType<T>());
         }
