@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Limbo.Umbraco.Migrations.Models.Udis;
 using Umbraco.Cms.Core;
 
@@ -8,12 +9,18 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         public virtual GuidUdi ParseGuidUdi(string input) {
 
-            if (UdiParser.TryParse(input, out GuidUdi? udi)) {
+            if (TryParseUdi(input, out GuidUdi? udi)) {
                 return udi!;
             }
 
             throw new Exception("Invalid GUID UDI: " + input);
 
+        }
+
+        public virtual bool TryParseUdi(string? value, [NotNullWhen(true)] out GuidUdi? result) {
+            bool _ = UdiParser.TryParse(value ?? string.Empty, out Udi? udi);
+            result = udi as GuidUdi;
+            return result is not null;
         }
 
         /// <summary>

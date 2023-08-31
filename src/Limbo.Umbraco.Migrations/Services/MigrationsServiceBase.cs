@@ -391,12 +391,6 @@ namespace Limbo.Umbraco.Migrations.Services {
             return StaticServiceProvider.Instance.GetRequiredService<IUmbracoContextAccessor>().GetRequiredUmbracoContext().Content!.GetContentType(alias)!;
         }
 
-        public virtual bool TryParseUdi(string? value, [NotNullWhen(true)] out GuidUdi? result) {
-            bool _ = UdiParser.TryParse(value ?? string.Empty, out Udi? udi);
-            result = udi as GuidUdi;
-            return result is not null;
-        }
-
         public virtual BlockListModel ConvertNestedContentToBlockList(NestedContentModel nestedContent) {
             return ConvertNestedContentToBlockList(null, null, nestedContent);
         }
