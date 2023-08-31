@@ -1,8 +1,8 @@
-﻿using Limbo.Umbraco.MigrationsClient.Models.Properties;
-using Limbo.Umbraco.MigrationsClient.Models;
+﻿using Limbo.Umbraco.MigrationsClient.Models;
 using Limbo.Umbraco.MigrationsClient.Models.Archetype;
+using Limbo.Umbraco.MigrationsClient.Models.Properties;
 
-namespace Limbo.Umbraco.Migrations.Converters.Other.Archetype {
+namespace Limbo.Umbraco.Migrations.Converters.Models.Archetype {
 
     /// <summary>
     /// Interface describing a converter for converting a <see cref="ArchetypeModel"/> instance into another value.
@@ -12,11 +12,11 @@ namespace Limbo.Umbraco.Migrations.Converters.Other.Archetype {
         /// <summary>
         /// Converts the specified <paramref name="model"/>.
         /// </summary>
-        /// <param name="model">The Achetype model.</param>
         /// <param name="owner">A reference to the parent element, if any.</param>
         /// <param name="property">A reference to the parent property, if any.</param>
+        /// <param name="model">The Achetype model.</param>
         /// <returns></returns>
-        object Convert(ArchetypeModel model, ILegacyElement? owner, ILegacyProperty? property);
+        object Convert(ILegacyElement owner, ILegacyProperty property, ArchetypeModel model);
 
     }
 
