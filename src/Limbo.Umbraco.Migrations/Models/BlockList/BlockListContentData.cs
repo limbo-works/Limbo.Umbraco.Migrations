@@ -32,7 +32,7 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
             // again
             int index1 = control.Row.Areas.IndexOf(control.Area);
             int index2 = control.Area.Controls.IndexOf(control);
-            Guid key = SecurityUtils.GetMd5Guid($"{control.Row.Id}#{index1}#{index2}");
+            Guid key = SecurityUtils.GetMd5Guid($"{control.Row.Id}#content#{index1}#{index2}");
 
             // Create an UDI based on the element type and the GUID key
             Udi = new GuidUdi("element", key);

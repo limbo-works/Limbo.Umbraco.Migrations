@@ -27,8 +27,9 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
             // key as the grid row, but even though this shouldn't be allowed in the legacy site, so rows have more
             // than one control, in which case we creatively need to generate a unique key for those additional
             // controls. Notice that is's important that the calculated key is the same if we repeat it again and again
-            int index = control.Area.Controls.IndexOf(control);
-            Guid key = SecurityUtils.GetMd5Guid($"{control.Row.Id}#ffs{(index == 0 ? "" : "#" + index)}");
+            int index1 = control.Row.Areas.IndexOf(control.Area);
+            int index2 = control.Area.Controls.IndexOf(control);
+            Guid key = SecurityUtils.GetMd5Guid($"{control.Row.Id}#settings#{index1}#{index2}");
 
             // Create an UDI based on the element type and the GUID key
             Udi = new GuidUdi("element", key);
