@@ -29,7 +29,7 @@
 
   <!-- Include NuGet dependencies -->
   <ItemGroup>
-    <PackageReference Include="Limbo.Umbraco.MigrationsClient" Version="1.0.4" />
+    <PackageReference Include="Limbo.Umbraco.MigrationsClient" Version="1.0.5" />
     <PackageReference Include="Skybrud.Essentials" Version="1.1.51" />
     <PackageReference Include="Skybrud.Umbraco.GridData" Version="5.0.3" />
     <PackageReference Include="Umbraco.Cms.Core" Version="[10.0.0,12.0)" />

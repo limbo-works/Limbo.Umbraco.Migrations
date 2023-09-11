@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Limbo.Umbraco.MigrationsClient.Models.Terraform;
+using Limbo.Umbraco.MigrationsClient.Models.Terratype;
 using Newtonsoft.Json;
 
 namespace Limbo.Umbraco.Migrations.Converters.Models.GMaps;
@@ -18,19 +18,19 @@ public class GoogleMapsModel {
     [JsonProperty("mapconfig")]
     public GoogleMapsConfig MapsConfig { get; set; } = new();
 
-    [return: NotNullIfNotNull("terraform")]
-    public static GoogleMapsModel? Convert(TerraformModel? terraform) {
+    [return: NotNullIfNotNull("terratype")]
+    public static GoogleMapsModel? Convert(TerratypeModel? terratype) {
 
-        if (terraform is null) return null;
+        if (terratype is null) return null;
 
         GoogleMapsModel maps = new() {
             Address = new GoogleMapsAddress {
-                FullAddress = terraform.Lookup
+                FullAddress = terratype.Lookup
             },
             MapsConfig = new GoogleMapsConfig {
-                Zoom = terraform.Zoom ?? 17,
+                Zoom = terratype.Zoom ?? 17,
                 MapType = GoogleMapsRoadType.Roadmap,
-                Coordinates = new GoogleMapsPoint(terraform.Position.Latitude, terraform.Position.Longitude)
+                Coordinates = new GoogleMapsPoint(terratype.Position.Latitude, terratype.Position.Longitude)
             }
         };
 
