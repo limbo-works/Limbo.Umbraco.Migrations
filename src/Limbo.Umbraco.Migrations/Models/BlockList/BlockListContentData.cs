@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using Skybrud.Essentials.Reflection;
 using Skybrud.Essentials.Security;
 using Skybrud.Umbraco.GridData.Models;
 using Umbraco.Cms.Core;
@@ -60,7 +61,7 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
         public BlockListContentData<TModel> SetValue<TProperty>(Expression<Func<TModel, TProperty>> selector, object? value) {
 
             // Get the name/alias of the property
-            string alias = GetPropertyInfo(selector).Name;
+            string alias = ReflectionUtils.GetPropertyInfo(selector).Name;
 
             // Not sure how much casing matters, so we better lookup the correct casing of the property type
             IPublishedPropertyType? propertyType = ContentType.GetPropertyType(alias);
@@ -70,22 +71,6 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
             SetValue(propertyType.Alias, value);
 
             return this;
-
-        }
-
-        private static PropertyInfo GetPropertyInfo<T>(Expression<T> expression) {
-
-            // TODO: Move to Skybrud.Essentials
-
-            if (expression.Body is not MemberExpression member) {
-                throw new ArgumentException($"Expression body is not of type MemberExpression: {expression}");
-            }
-
-            if (member.Member is not PropertyInfo propertyInfo) {
-                throw new ArgumentException($"Expression member is not a property: {expression}");
-            }
-
-            return propertyInfo;
 
         }
 
