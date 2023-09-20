@@ -372,12 +372,14 @@ namespace Limbo.Umbraco.Migrations.Services {
             return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
         }
 
-        public virtual BlockListSettingsData CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel {
-            return new BlockListSettingsData(key, GetModelType<T>());
+        public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel {
+            Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
+            return (BlockListSettingsData<T>) Activator.CreateInstance(type, key, GetModelType<T>())!;
         }
 
-        public virtual BlockListSettingsData CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel {
-            return new BlockListSettingsData(control, GetModelType<T>());
+        public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel {
+            Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
+            return (BlockListSettingsData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
         }
 
         public static IPublishedContentType GetModelType<T>() where T : PublishedElementModel {

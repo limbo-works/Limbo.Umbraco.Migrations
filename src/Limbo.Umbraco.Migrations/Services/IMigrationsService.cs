@@ -30,9 +30,9 @@ namespace Limbo.Umbraco.Migrations.Services {
 
         BlockListContentData<T> CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel;
 
-        BlockListSettingsData CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel;
+        BlockListSettingsData<T> CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel;
 
-        BlockListSettingsData CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel;
+        BlockListSettingsData<T> CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel;
 
         GuidUdi ParseGuidUdi(string value);
 

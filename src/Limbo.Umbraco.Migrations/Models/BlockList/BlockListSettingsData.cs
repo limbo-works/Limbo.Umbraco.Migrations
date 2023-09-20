@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using Skybrud.Essentials.Reflection;
 using Skybrud.Essentials.Security;
 using Skybrud.Umbraco.GridData.Models;
 using Umbraco.Cms.Core;
@@ -44,6 +46,30 @@ namespace Limbo.Umbraco.Migrations.Models.BlockList {
             if (value is string str && string.IsNullOrWhiteSpace(str)) return this;
             Properties.Add(name, value);
             return this;
+        }
+
+    }
+
+    public class BlockListSettingsData<TModel> : BlockListSettingsData where TModel : PublishedElementModel {
+
+        public BlockListSettingsData(Guid key, IPublishedContentType contentType) : base(key, contentType) { }
+
+        public BlockListSettingsData(GridControl control, IPublishedContentType contentType) : base(control, contentType) { }
+
+        public BlockListSettingsData<TModel> SetValue<TProperty>(Expression<Func<TModel, TProperty>> selector, object? value) {
+
+            // Get the name/alias of the property
+            string alias = ReflectionUtils.GetPropertyInfo(selector).Name;
+
+            // Not sure how much casing matters, so we better lookup the correct casing of the property type
+            IPublishedPropertyType? propertyType = ContentType.GetPropertyType(alias);
+            if (propertyType is null) throw new Exception($"Property type with alias '{alias}' not found for content type '{ContentType.Alias}'.");
+
+            // Set the property value
+            SetValue(propertyType.Alias, value);
+
+            return this;
+
         }
 
     }
