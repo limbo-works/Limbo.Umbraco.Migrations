@@ -11,7 +11,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
         public UmbracoContentPicker2Converter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
-        public override bool IsConverter(ILegacyProperty property) {
+        public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
             return property.EditorAlias is PropertyEditorAliases.Umbraco.ContentPicker2;
         }
 

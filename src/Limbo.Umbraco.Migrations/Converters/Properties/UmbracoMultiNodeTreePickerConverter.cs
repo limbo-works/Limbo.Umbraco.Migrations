@@ -12,7 +12,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
         public UmbracoMultiNodeTreePickerConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
-        public override bool IsConverter(ILegacyProperty property) {
+        public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
             return property.EditorAlias is "Umbraco.MultiNodeTreePicker" or "Umbraco.MultiNodeTreePicker2";
         }
 

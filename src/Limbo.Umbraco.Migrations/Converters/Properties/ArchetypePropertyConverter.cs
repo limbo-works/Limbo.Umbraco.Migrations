@@ -26,7 +26,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
         #region Member methods
 
-        public override bool IsConverter(ILegacyProperty property) {
+        public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
             return property.EditorAlias == PropertyEditorAliases.Archetype;
         }
 

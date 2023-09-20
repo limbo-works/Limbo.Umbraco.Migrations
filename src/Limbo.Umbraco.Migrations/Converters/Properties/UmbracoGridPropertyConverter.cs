@@ -21,7 +21,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
             _gridDataModelConverter = gridDataModelConverter;
         }
 
-        public override bool IsConverter(ILegacyProperty property) {
+        public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
             return property.EditorAlias is "Umbraco.Grid";
         }
 

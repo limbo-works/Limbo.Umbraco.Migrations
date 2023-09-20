@@ -17,7 +17,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
 
         public UmbracoMediaPickerConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
-        public override bool IsConverter(ILegacyProperty property) {
+        public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
             return property.EditorAlias is "Umbraco.MediaPicker2";
         }
 

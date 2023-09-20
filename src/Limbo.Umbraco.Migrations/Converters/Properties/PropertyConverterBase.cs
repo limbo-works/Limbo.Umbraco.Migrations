@@ -16,7 +16,7 @@ namespace Limbo.Umbraco.Migrations.Converters.Properties {
             MigrationsClient = migrationsClient;
         }
 
-        public abstract bool IsConverter(ILegacyProperty property);
+        public abstract bool IsConverter(ILegacyElement owner, ILegacyProperty property);
 
         public abstract object? Convert(ILegacyElement owner, ILegacyProperty property);
 

@@ -338,7 +338,7 @@ namespace Limbo.Umbraco.Migrations.Services {
         public virtual object? ConvertPropertyValue(ILegacyElement owner, ILegacyProperty property) {
 
             // Look for a converter that knows how to convert the property value
-            if (Dependencies.PropertyConverterCollection.FirstOrDefault(x => x.IsConverter(property)) is { } converter) {
+            if (Dependencies.PropertyConverterCollection.FirstOrDefault(x => x.IsConverter(owner, property)) is { } converter) {
                 try {
                     return converter.Convert(owner, property);
                 } catch (Exception ex) {
