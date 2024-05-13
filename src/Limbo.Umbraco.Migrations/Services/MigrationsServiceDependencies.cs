@@ -11,57 +11,55 @@ using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
-namespace Limbo.Umbraco.Migrations.Services {
+namespace Limbo.Umbraco.Migrations.Services;
 
-    public class MigrationsServiceDependencies {
+public class MigrationsServiceDependencies {
 
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+    private readonly IUmbracoContextAccessor _umbracoContextAccessor;
 
-        public IConfiguration Configuration { get; }
-        public IWebHostEnvironment WebHostEnvironment { get; }
-        public IContentService ContentService { get; }
-        public IMediaService MediaService { get; }
-        public IMemberService MemberService { get; }
-        public MediaFileManager MediaFileManager { get; }
-        public MediaUrlGeneratorCollection MediaUrlGeneratorCollection { get; }
-        public IShortStringHelper ShortStringHelper { get; }
-        public PropertyConverterCollection PropertyConverterCollection { get; }
-        public IContentTypeBaseServiceProvider ContentTypeBaseServiceProvider { get; }
-        public IGridFactory GridFactory { get; }
-        public GridControlConverterCollection GridControlConverters { get; }
-        public IMigrationsClient MigrationsClient { get; }
-        public IUmbracoContext UmbracoContext => _umbracoContextAccessor.GetRequiredUmbracoContext();
+    public IConfiguration Configuration { get; }
+    public IWebHostEnvironment WebHostEnvironment { get; }
+    public IContentService ContentService { get; }
+    public IMediaService MediaService { get; }
+    public IMemberService MemberService { get; }
+    public MediaFileManager MediaFileManager { get; }
+    public MediaUrlGeneratorCollection MediaUrlGeneratorCollection { get; }
+    public IShortStringHelper ShortStringHelper { get; }
+    public PropertyConverterCollection PropertyConverterCollection { get; }
+    public IContentTypeBaseServiceProvider ContentTypeBaseServiceProvider { get; }
+    public IGridFactory GridFactory { get; }
+    public GridControlConverterCollection GridControlConverters { get; }
+    public IMigrationsClient MigrationsClient { get; }
+    public IUmbracoContext UmbracoContext => _umbracoContextAccessor.GetRequiredUmbracoContext();
 
-        public MigrationsServiceDependencies(IConfiguration configuration,
-            IWebHostEnvironment webHostEnvironment,
-            IContentService contentService,
-            IMediaService mediaService,
-            IMemberService memberService,
-            MediaFileManager mediaFileManager,
-            MediaUrlGeneratorCollection mediaUrlGeneratorCollection,
-            IShortStringHelper shortStringHelper,
-            PropertyConverterCollection propertyConverterCollection,
-            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
-            IGridFactory gridFactory,
-            GridControlConverterCollection gridControlConverters,
-            IMigrationsClient migrationsClient,
-            IUmbracoContextAccessor umbracoContextAccessor) {
-            _umbracoContextAccessor = umbracoContextAccessor;
-            Configuration = configuration;
-            WebHostEnvironment = webHostEnvironment;
-            ContentService = contentService;
-            MediaService = mediaService;
-            MemberService = memberService;
-            MediaFileManager = mediaFileManager;
-            MediaUrlGeneratorCollection = mediaUrlGeneratorCollection;
-            ShortStringHelper = shortStringHelper;
-            PropertyConverterCollection = propertyConverterCollection;
-            ContentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
-            GridFactory = gridFactory;
-            GridControlConverters = gridControlConverters;
-            MigrationsClient = migrationsClient;
-        }
-
+    public MigrationsServiceDependencies(IConfiguration configuration,
+        IWebHostEnvironment webHostEnvironment,
+        IContentService contentService,
+        IMediaService mediaService,
+        IMemberService memberService,
+        MediaFileManager mediaFileManager,
+        MediaUrlGeneratorCollection mediaUrlGeneratorCollection,
+        IShortStringHelper shortStringHelper,
+        PropertyConverterCollection propertyConverterCollection,
+        IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
+        IGridFactory gridFactory,
+        GridControlConverterCollection gridControlConverters,
+        IMigrationsClient migrationsClient,
+        IUmbracoContextAccessor umbracoContextAccessor) {
+        _umbracoContextAccessor = umbracoContextAccessor;
+        Configuration = configuration;
+        WebHostEnvironment = webHostEnvironment;
+        ContentService = contentService;
+        MediaService = mediaService;
+        MemberService = memberService;
+        MediaFileManager = mediaFileManager;
+        MediaUrlGeneratorCollection = mediaUrlGeneratorCollection;
+        ShortStringHelper = shortStringHelper;
+        PropertyConverterCollection = propertyConverterCollection;
+        ContentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
+        GridFactory = gridFactory;
+        GridControlConverters = gridControlConverters;
+        MigrationsClient = migrationsClient;
     }
 
 }

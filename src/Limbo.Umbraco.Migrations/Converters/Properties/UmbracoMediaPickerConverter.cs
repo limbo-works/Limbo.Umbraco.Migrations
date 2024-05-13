@@ -11,45 +11,43 @@ using Skybrud.Essentials.Strings.Extensions;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 
-namespace Limbo.Umbraco.Migrations.Converters.Properties {
+namespace Limbo.Umbraco.Migrations.Converters.Properties;
 
-    public class UmbracoMediaPickerConverter : PropertyConverterBase {
+public class UmbracoMediaPickerConverter : PropertyConverterBase {
 
-        public UmbracoMediaPickerConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
+    public UmbracoMediaPickerConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
-        public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
-            return property.EditorAlias is "Umbraco.MediaPicker2";
-        }
+    public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
+        return property.EditorAlias is "Umbraco.MediaPicker2";
+    }
 
-        public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
+    public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
 
-            // Get the value as a string
-            string value = property.Value.ToString();
+        // Get the value as a string
+        string value = property.Value.ToString();
 
-            MediaPickerList list = new();
+        MediaPickerList list = new();
 
-            int i = 0;
+        int i = 0;
 
-            foreach (string item in value.ToStringArray()) {
+        foreach (string item in value.ToStringArray()) {
 
-                // Generate a unique but reproduceable GUID key for the new item
-                Guid key = SecurityUtils.GetMd5Guid($"imagePickerItem:{owner.Key}:{i++}");
+            // Generate a unique but reproduceable GUID key for the new item
+            Guid key = SecurityUtils.GetMd5Guid($"imagePickerItem:{owner.Key}:{i++}");
 
-                if (!UdiParser.TryParse(item, out Udi? udi)) throw new Exception($"Item is not a valid UDI: {item}");
-                if (udi is not GuidUdi guidUdi) throw new Exception($"Item is not a valid GUID UDI: {item}");
+            if (!UdiParser.TryParse(item, out Udi? udi)) throw new Exception($"Item is not a valid UDI: {item}");
+            if (udi is not GuidUdi guidUdi) throw new Exception($"Item is not a valid GUID UDI: {item}");
 
-                // Get a reference to the media
-                IMedia? media = MigrationsService.ImportMedia(guidUdi.Guid);
-                if (media is null) continue;
+            // Get a reference to the media
+            IMedia? media = MigrationsService.ImportMedia(guidUdi.Guid);
+            if (media is null) continue;
 
-                // Add a new media item
-                list.Add(new MediaPickerItem(key, media.Key));
-
-            }
-
-            return list.Count == 0 ? null : JToken.FromObject(list).ToString(Formatting.None);
+            // Add a new media item
+            list.Add(new MediaPickerItem(key, media.Key));
 
         }
+
+        return list.Count == 0 ? null : JToken.FromObject(list).ToString(Formatting.None);
 
     }
 

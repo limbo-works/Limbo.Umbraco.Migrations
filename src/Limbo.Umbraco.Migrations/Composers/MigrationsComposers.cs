@@ -7,32 +7,30 @@ using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 
-namespace Limbo.Umbraco.Migrations.Composers {
+namespace Limbo.Umbraco.Migrations.Composers;
+
+//// <inheritdoc />
+public class MigrationsComposer : IComposer {
 
     //// <inheritdoc />
-    public class MigrationsComposer : IComposer {
+    public void Compose(IUmbracoBuilder builder) {
 
-        //// <inheritdoc />
-        public void Compose(IUmbracoBuilder builder) {
+        // TODO: Should we only set up the package for "Development" ?
 
-            // TODO: Should we only set up the package for "Development" ?
+        builder
+            .WithCollectionBuilder<PropertyConverterCollectionBuilder>()
+            .Add(() => builder.TypeLoader.GetTypes<IPropertyConverter>());
 
-            builder
-                .WithCollectionBuilder<PropertyConverterCollectionBuilder>()
-                .Add(() => builder.TypeLoader.GetTypes<IPropertyConverter>());
+        builder
+            .WithCollectionBuilder<GridControlConverterCollectionBuilder>()
+            .Add(() => builder.TypeLoader.GetTypes<IGridControlConverter>());
 
-            builder
-                .WithCollectionBuilder<GridControlConverterCollectionBuilder>()
-                .Add(() => builder.TypeLoader.GetTypes<IGridControlConverter>());
+        builder.Services.AddSingleton<MigrationsServiceDependencies>();
+        builder.Services.AddSingleton<IArchetypeModelConverter, ArchetypeModelConverter>();
+        builder.Services.AddSingleton<IGridDataModelConverter, GridDataModelConverter>();
 
-            builder.Services.AddSingleton<MigrationsServiceDependencies>();
-            builder.Services.AddSingleton<IArchetypeModelConverter, ArchetypeModelConverter>();
-            builder.Services.AddSingleton<IGridDataModelConverter, GridDataModelConverter>();
+        builder.ManifestFilters().Append<MigrationsManifestFilter>();
 
-            builder.ManifestFilters().Append<MigrationsManifestFilter>();
-
-
-        }
 
     }
 

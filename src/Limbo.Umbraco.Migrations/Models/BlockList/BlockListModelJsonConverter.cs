@@ -3,84 +3,82 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Limbo.Umbraco.Migrations.Models.BlockList {
+namespace Limbo.Umbraco.Migrations.Models.BlockList;
 
-    public class BlockListModelJsonConverter : JsonConverter {
+public class BlockListModelJsonConverter : JsonConverter {
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
 
-            if (value is not BlockListModel model) {
-                writer.WriteNull();
-                return;
-            }
+        if (value is not BlockListModel model) {
+            writer.WriteNull();
+            return;
+        }
 
-            JArray layout = new();
-            JArray contentData = new();
-            JArray settingsData = new();
+        JArray layout = new();
+        JArray contentData = new();
+        JArray settingsData = new();
 
-            foreach (BlockListItem item in model.Items) {
+        foreach (BlockListItem item in model.Items) {
 
-                JObject layoutItem = new() {
-                    {"contentUdi", item.Content.Udi.ToString()}
-                };
-
-                if (item.Settings is not null) layoutItem.Add("settingsUdi", item.Settings.Udi.ToString());
-
-                layout.Add(layoutItem);
-
-                contentData.Add(ConvertData(item.Content));
-                if (item.Settings is not null) settingsData.Add(ConvertData(item.Settings));
-
-            }
-
-            JObject blockListValue = new() {
-                { "layout", new JObject { { "Umbraco.BlockList", layout } } },
-                { "contentData", contentData },
-                { "settingsData", settingsData }
+            JObject layoutItem = new() {
+                {"contentUdi", item.Content.Udi.ToString()}
             };
 
-            blockListValue.WriteTo(writer);
+            if (item.Settings is not null) layoutItem.Add("settingsUdi", item.Settings.Udi.ToString());
+
+            layout.Add(layoutItem);
+
+            contentData.Add(ConvertData(item.Content));
+            if (item.Settings is not null) settingsData.Add(ConvertData(item.Settings));
 
         }
 
-        private JObject ConvertData(BlockListContentData data) {
+        JObject blockListValue = new() {
+            { "layout", new JObject { { "Umbraco.BlockList", layout } } },
+            { "contentData", contentData },
+            { "settingsData", settingsData }
+        };
 
-            JObject json = new() {
-                {"contentTypeKey", data.ContentType.Key},
-                {"udi", data.Udi.ToString()}
-            };
+        blockListValue.WriteTo(writer);
 
-            foreach (KeyValuePair<string, object?> property in data.Properties) {
-                json.Add(property.Key, property.Value is null ? null : JToken.FromObject(property.Value));
-            }
+    }
 
-            return json;
+    private JObject ConvertData(BlockListContentData data) {
 
+        JObject json = new() {
+            {"contentTypeKey", data.ContentType.Key},
+            {"udi", data.Udi.ToString()}
+        };
+
+        foreach (KeyValuePair<string, object?> property in data.Properties) {
+            json.Add(property.Key, property.Value is null ? null : JToken.FromObject(property.Value));
         }
 
-        private JObject ConvertData(BlockListSettingsData data) {
+        return json;
 
-            JObject json = new() {
-                {"contentTypeKey", data.ContentType.Key},
-                {"udi", data.Udi.ToString()}
-            };
+    }
 
-            foreach (KeyValuePair<string, object?> property in data.Properties) {
-                json.Add(property.Key, property.Value is null ? null : JToken.FromObject(property.Value));
-            }
+    private JObject ConvertData(BlockListSettingsData data) {
 
-            return json;
+        JObject json = new() {
+            {"contentTypeKey", data.ContentType.Key},
+            {"udi", data.Udi.ToString()}
+        };
 
+        foreach (KeyValuePair<string, object?> property in data.Properties) {
+            json.Add(property.Key, property.Value is null ? null : JToken.FromObject(property.Value));
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer) {
-            throw new NotImplementedException();
-        }
+        return json;
 
-        public override bool CanConvert(Type objectType) {
-            return false;
-        }
+    }
 
+    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer) {
+        throw new NotImplementedException();
+    }
+
+    public override bool CanConvert(Type objectType) {
+        return false;
     }
 
 }

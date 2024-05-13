@@ -1,12 +1,10 @@
-﻿namespace Limbo.Umbraco.Migrations.Models.BlockList {
+﻿namespace Limbo.Umbraco.Migrations.Models.BlockList;
 
-    public static class BlockListExtensions {
+public static class BlockListExtensions {
 
-        public static TContent AppendAsItem<TContent>(this TContent content, BlockListModel blockList) where TContent : BlockListContentData {
-            blockList.AddItem(content);
-            return content;
-        }
-
+    public static TContent AppendAsItem<TContent>(this TContent content, BlockListModel blockList) where TContent : BlockListContentData {
+        blockList.AddItem(content);
+        return content;
     }
 
 }
