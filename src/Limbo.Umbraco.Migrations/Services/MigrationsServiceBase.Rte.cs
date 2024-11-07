@@ -133,11 +133,11 @@ public partial class MigrationsServiceBase {
 
                     // Import the referenced media
                     IMedia? media = ImportMedia(udi.Guid);
-                    if (media is null) break;
+                    if (media is null) return;
 
                     // Try to get the relative path to the media file (aka the URL)
                     if (!media.TryGetMediaPath("umbracoFile", Dependencies.MediaUrlGeneratorCollection, out string? mediaFilePath)) {
-                        throw new Exception("Oh noes!");
+                        throw new MigrationsException($"Failed determining relative URL for media with key '{media.Key}'...");
                     }
 
                     // If the value of the "src" attribute is different from the media's current URL, we should set the new URL instead
