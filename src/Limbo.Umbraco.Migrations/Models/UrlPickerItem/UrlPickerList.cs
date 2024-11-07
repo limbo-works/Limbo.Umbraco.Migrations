@@ -5,7 +5,7 @@ namespace Limbo.Umbraco.Migrations.Models.UrlPickerItem;
 
 public class UrlPickerList : IReadOnlyList<UrlPickerItem> {
 
-    private readonly List<UrlPickerItem> _items = new();
+    private readonly List<UrlPickerItem> _items = [];
 
     public int Count => _items.Count;
 
