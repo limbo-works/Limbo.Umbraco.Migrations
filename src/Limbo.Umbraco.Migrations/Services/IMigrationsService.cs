@@ -30,9 +30,13 @@ public interface IMigrationsService {
 
     BlockListContentData<T> CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel;
 
+    BlockListContentData<T> CreateBlockListContentData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel;
+
     BlockListSettingsData<T> CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel;
 
     BlockListSettingsData<T> CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel;
+
+    BlockListSettingsData<T> CreateBlockListSettingsData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel;
 
     GuidUdi ParseGuidUdi(string value);
 
