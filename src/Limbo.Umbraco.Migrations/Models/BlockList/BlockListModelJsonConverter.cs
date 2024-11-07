@@ -51,7 +51,9 @@ public class BlockListModelJsonConverter : JsonConverter {
         };
 
         foreach (KeyValuePair<string, object?> property in data.Properties) {
-            json.Add(property.Key, property.Value is null ? null : JToken.FromObject(property.Value));
+            if (property.Value is null) continue;
+            JToken value = JToken.FromObject(property.Value);
+            json.Add(property.Key, value is JObject or JArray ? value.ToString(Formatting.None) : value);
         }
 
         return json;

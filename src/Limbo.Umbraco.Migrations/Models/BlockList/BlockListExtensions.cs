@@ -7,4 +7,9 @@ public static class BlockListExtensions {
         return content;
     }
 
+    public static TItem AppendTo<TItem>(this TItem item, BlockListModel model) where TItem : BlockListItem {
+        model.AddItem(item);
+        return item;
+    }
+
 }
