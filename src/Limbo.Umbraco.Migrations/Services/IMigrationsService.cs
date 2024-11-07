@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using Limbo.Umbraco.Migrations.Models;
 using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
@@ -12,9 +13,9 @@ namespace Limbo.Umbraco.Migrations.Services;
 
 public interface IMigrationsService {
 
-    IContent? ImportContent(int id);
+    ContentImportResult ImportContent(int id);
 
-    IContent? ImportContent(Guid key);
+    ContentImportResult ImportContent(Guid key);
 
     IMedia? ImportMedia(int id);
 

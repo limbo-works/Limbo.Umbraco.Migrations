@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Limbo.Umbraco.Migrations.Exceptions;
+using Limbo.Umbraco.Migrations.Models;
 using Limbo.Umbraco.Migrations.Models.BlockList;
+using Limbo.Umbraco.Migrations.Models.Content;
 using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
@@ -64,55 +66,110 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
     #region Member methods
 
-    public virtual IContent? ImportContent(int id) {
+    public virtual ContentImportResult ImportContent(int id) {
+        return ImportContent(id, true);
+    }
+
+    public virtual ContentImportResult ImportContent(int id, bool update) {
 
         // Get the legacy content item from the old site
         LegacyContent source = MigrationsClient.GetContentById(id);
 
         // Check whether the content item already exists
         IContent? content = ContentService.GetById(source.Key);
-        if (content is not null) return content;
 
-        // Import the content
-        return ImportContent(source);
+        // Return right away if the update flag is false and the content node already exists
+        if (!update && content is not null) return new ContentImportResult(ContentImportStatus.NotModified, content);
+
+        return ImportContent(source, content, update);
 
     }
 
-    public virtual IContent? ImportContent(Guid key) {
+    public virtual ContentImportResult ImportContent(Guid key) {
+        return ImportContent(key, true);
+    }
+
+    public virtual ContentImportResult ImportContent(Guid key, bool update) {
 
         // Check whether the content item already exists
         IContent? content = ContentService.GetById(key);
-        if (content is not null) return content;
+
+        // Return right away if the update flag is false and the content node already exists
+        if (!update && content is not null) return new ContentImportResult(ContentImportStatus.NotModified, content);
 
         // Get the legacy content item from the old site
         LegacyContent source = MigrationsClient.GetContentByKey(key);
 
-        return ImportContent(source);
+        return ImportContent(source, content, update);
 
     }
 
-    protected virtual IContent ImportContent(LegacyContent source) {
+    public virtual ContentImportResult ImportContent(LegacyContent source, IContent? content, bool update) {
 
-        // Determine the parent (it will be imported if it hasn't already been imported)
-        IContent? parent = source.Path.Count == 0 ? null : ImportContent(source.Path.Last().Key);
+        try {
 
-        // Determine the content type alias of the item to be created
-        string contentTypeAlias = GetContentTypeAlias(source);
+            // Convert the content
+            MigrationsContentModel model;
+            try {
+                model = ConvertContent(source, content);
+            } catch (Exception ex) {
+                throw new MigrationsException($"Failed converting properties for page with key '{source.Key}'...", ex);
+            }
 
-        // Create the new content item (in memory for now)
-        IContent content = ContentService.Create(source.Name, parent?.Id ?? -1, contentTypeAlias, MigrationUserId);
+            int parentId = -1;
 
-        // Make sure we use the same GUID key
-        content.Key = source.Key;
-        content.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
+            if (model.ParentKey is not null) {
 
-        // Convert the individual properties
-        ConvertProperties(source, content);
+                // Attempt to import the parent
+                ContentImportResult result = ImportContent(model.ParentKey.Value, false);
 
-        // Save and publish the content item
-        ContentService.SaveAndPublish(content, userId: MigrationUserId);
+                // Throw a new exception if importing the parent failed
+                if (result.Status == ContentImportStatus.Failed) throw new MigrationsException($"Failed importing parent for '{source.Key}'...", result.Exception);
 
-        return content;
+                parentId = result.Content!.Id;
+
+            }
+
+            ContentImportStatus status;
+
+            if (content is null) {
+
+                // Set the status
+                status = ContentImportStatus.Created;
+
+                // Create the new content item (in memory for now)
+                content = ContentService.Create(model.Name, parentId, model.ContentTypeAlias, MigrationUserId);
+
+                // Make sure we use the same GUID key
+                content.Key = source.Key;
+
+                // Update the properties
+                UpdateProperties(model, content);
+
+            } else {
+
+                // Return right away if the updated flag is false
+                if (!update) return new ContentImportResult(ContentImportStatus.NotModified, content);
+
+                // Update the properties
+                bool modified = UpdateProperties(model, content);
+
+                // Set the status
+                status = modified ? ContentImportStatus.Updated : ContentImportStatus.NotModified;
+
+            }
+
+            // Save and publish the content item
+            if (status != ContentImportStatus.NotModified) ContentService.SaveAndPublish(content, userId: MigrationUserId);
+
+            // Return the result
+            return new ContentImportResult(status, content);
+
+        } catch (Exception ex) {
+
+            return new ContentImportResult(ex);
+
+        }
 
     }
 
@@ -157,6 +214,7 @@ public partial class MigrationsServiceBase : IMigrationsService {
             "Folder" => ImportMediaFolder(source, parent),
             "Image" => ImportMediaImage(source, parent),
             "File" => ImportMediaFile(source, parent),
+            "video" => ImportMediaFile(source, parent),
             _ => throw new Exception($"Unsupported media type: {source.ContentTypeAlias}")
         };
 
@@ -170,6 +228,9 @@ public partial class MigrationsServiceBase : IMigrationsService {
         // Make sure we use the same GUID key
         folder.Key = source.Key;
         folder.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
+
+        // Update custom properties
+        UpdateProperties(source, folder);
 
         // Save the media to the database
         MediaService.Save(folder, MigrationUserId);
@@ -231,6 +292,9 @@ public partial class MigrationsServiceBase : IMigrationsService {
             }
         }
 
+        // Update custom properties
+        UpdateProperties(source, m);
+
         // Save the media
         MediaService.Save(m, MigrationUserId);
 
@@ -254,7 +318,12 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
         MigrationsClient.DownloadBytes(source, mediaPath);
 
-        IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, source.ContentTypeAlias, MigrationUserId);
+        string contentTypeAlias = source.ContentTypeAlias switch {
+            "video" => "umbracoMediaVideo",
+            _ => source.ContentTypeAlias
+        };
+
+        IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, contentTypeAlias, MigrationUserId);
         m.Key = source.Key;
         m.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
 
@@ -272,6 +341,9 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
         stream.Close();
 
+        // Update custom properties
+        UpdateProperties(source, m);
+
         // Save the media
         MediaService.Save(m, MigrationUserId);
 
@@ -285,7 +357,7 @@ public partial class MigrationsServiceBase : IMigrationsService {
     /// <summary>
     /// Returns the new content type of the specified <paramref name="entity"/>.
     ///
-    /// By default this method will return the existing content type alias, but it may be overriden to map existing aliases to new aliases.
+    /// By default, this method will return the existing content type alias, but it may be overriden to map existing aliases to new aliases.
     /// </summary>
     /// <param name="entity">The entity.</param>
     /// <returns>The new content type alias for <paramref name="entity"/>.</returns>
@@ -295,6 +367,78 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
     public virtual string GetPropertyAlias(ILegacyElement entity, ILegacyProperty property) {
         return property.Alias;
+    }
+
+    public virtual MigrationsContentModel ConvertContent(LegacyContent entity, IContentBase? content) {
+
+        MigrationsContentModel model = new(entity) {
+            ContentTypeAlias = GetContentTypeAlias(entity)
+        };
+
+        foreach (ILegacyProperty property in entity.Properties) {
+
+            // Determine the new property alias (usually the same)
+            string propertyAlias = GetPropertyAlias(entity, property);
+
+            // Convert the property value
+            object? newValue = ConvertPropertyValue(entity, property);
+
+            // Update the property value
+            model.SetValue(propertyAlias, newValue);
+
+        }
+
+        return model;
+
+    }
+
+    public virtual bool UpdateProperties(MigrationsContentModel model, IContentBase content) {
+
+        bool modified = false;
+
+        if (content.Name != model.Name) {
+            content.Name = model.Name;
+            modified = true;
+        }
+
+        foreach (var property in model.Properties) {
+
+            object? current = content.GetValue(property.Key);
+
+            switch (property.Value) {
+
+                case null:
+                case int:
+                case string:
+                case bool:
+                    content.SetValue(property.Key, property.Value);
+                    modified |= current != property.Value;
+                    break;
+
+                case DateTime dt:
+                    content.SetValue(property.Key, dt);
+                    modified |= current != property.Value;
+                    break;
+
+                default:
+                    if (property.Value.GetType().FullName!.StartsWith("System.")) throw new Exception("WTF? " + property.Value.GetType() + " => " + property.Value);
+                    string newValue = JToken.FromObject(property.Value).ToString(Formatting.None);
+                    content.SetValue(property.Key, newValue);
+                    modified |= !Equals(current, newValue);
+                    break;
+
+            }
+
+        }
+
+        return modified;
+
+    }
+
+    protected virtual void UpdateProperties(LegacyMedia source, IMedia media) {
+
+        // we don't really do anything here, but allow the method to be overridden
+
     }
 
     protected virtual void ConvertProperties(ILegacyElement entity, IContentBase content) {
@@ -358,6 +502,12 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
     }
 
+    public BlockListItem<TContent, TSettings> CreateBlockListItem<TContent, TSettings>(Guid contentKey, Guid settingsKey) where TContent : PublishedElementModel where TSettings : PublishedElementModel {
+        BlockListContentData<TContent> content = CreateBlockListContentData<TContent>(contentKey);
+        BlockListSettingsData<TSettings> settings = CreateBlockListSettingsData<TSettings>(settingsKey);
+        return new BlockListItem<TContent, TSettings>(content, settings);
+    }
+
     public virtual BlockListSettingsData? CreateDefaultBlockListSettings(GridControl control) {
         return null;
     }
@@ -372,12 +522,22 @@ public partial class MigrationsServiceBase : IMigrationsService {
         return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
     }
 
+    public virtual BlockListContentData<T> CreateBlockListContentData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel {
+        Type type = typeof(BlockListContentData<>).MakeGenericType(typeof(T));
+        return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
+    }
+
     public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel {
         Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
         return (BlockListSettingsData<T>) Activator.CreateInstance(type, key, GetModelType<T>())!;
     }
 
     public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel {
+        Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
+        return (BlockListSettingsData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
+    }
+
+    public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel {
         Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
         return (BlockListSettingsData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
     }
@@ -469,24 +629,33 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
         if (item is null) return null;
 
+        if (IgnoredIds.Contains(item.Id)) return null;
+
+        UdiParser.TryParse(item.Udi, out GuidUdi? udi);
+
+        if (udi is not null && IgnoredKeys.Contains(udi.Guid)) return null;
+
+        string? anchor = item.JObject.GetString("anchor");
         string? target = item.Target == "_self" ? null : item.Target.NullIfWhiteSpace();
 
-        switch (item.Mode) {
+        switch (item.Type) {
 
-            case LinkPickerMode.Content:
+            case LinkPickerType.Content:
                 try {
+                    if (udi is not null) return UrlPickerItem.CreateContentItem(item.Name, udi, item.Url!, target);
                     LegacyContent content = MigrationsClient.GetContentById(item.Id);
-                    return UrlPickerItem.CreateContentItem(item.Name, new GuidUdi(global::Umbraco.Cms.Core.Constants.UdiEntityType.Document, content.Key), item.Url, target);
+                    return UrlPickerItem.CreateContentItem(item.Name, new GuidUdi(global::Umbraco.Cms.Core.Constants.UdiEntityType.Document, content.Key), item.Url!, target, queryString: anchor);
+
                 } catch (Exception ex) {
                     throw new Exception($"Failed getting content with ID {item.Id}...", ex);
                 }
 
-            case LinkPickerMode.Media:
+            case LinkPickerType.Media:
                 IMedia? media = ImportMedia(item.Id);
-                return media is null ? null : UrlPickerItem.CreateMediaItem(item.Name, media.GetUdi(), item.Url, target);
+                return media is null ? null : UrlPickerItem.CreateMediaItem(item.Name, media.GetUdi(), item.Url!, target, queryString: anchor);
 
             default:
-                return string.IsNullOrWhiteSpace(item.Url) ? null : UrlPickerItem.CreateExternalItem(item.Name, item.Url, target);
+                return string.IsNullOrWhiteSpace(item.Url) ? null : UrlPickerItem.CreateExternalItem(item.Name, item.Url, target, queryString: anchor);
 
         }
 
