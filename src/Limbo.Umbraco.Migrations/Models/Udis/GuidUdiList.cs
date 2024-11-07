@@ -43,4 +43,8 @@ public class GuidUdiList : List<GuidUdi> {
         return string.Join(",", this);
     }
 
+    public GuidUdiList? NullIfEmpty() {
+        return Count == 0 ? null : this;
+    }
+
 }
