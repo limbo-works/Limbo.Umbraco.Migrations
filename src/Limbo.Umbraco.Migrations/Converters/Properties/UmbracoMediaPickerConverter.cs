@@ -18,10 +18,15 @@ public class UmbracoMediaPickerConverter : PropertyConverterBase {
     public UmbracoMediaPickerConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient) : base(migrationsService, migrationsClient) { }
 
     public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
-        return property.EditorAlias is "Umbraco.MediaPicker2";
+        return property.EditorAlias is "Umbraco.MediaPicker2" or "Umbraco.MediaPicker3";
     }
 
     public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
+
+        if (property.Value.Type == JTokenType.Null) return null;
+
+        // The V3 media picker already has the expected format
+        if (property.EditorAlias is "Umbraco.MediaPicker3") return property.Value;
 
         // Get the value as a string
         string value = property.Value.ToString();
