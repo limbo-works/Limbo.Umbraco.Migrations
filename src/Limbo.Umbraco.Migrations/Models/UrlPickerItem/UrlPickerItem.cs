@@ -9,21 +9,21 @@ namespace Limbo.Umbraco.Migrations.Models.UrlPickerItem;
 public class UrlPickerItem {
 
     [JsonProperty("name")]
-    public string Name { get; }
+    public string Name { get; set; }
 
     [JsonProperty("target", NullValueHandling = NullValueHandling.Ignore)]
-    public string? Target { get; }
+    public string? Target { get; set; }
 
     [JsonConverter(typeof(EnumCamelCaseConverter))]
     [JsonProperty("type", NullValueHandling = NullValueHandling.Ignore)]
-    public LinkType Type { get; }
+    public LinkType Type { get; set; }
 
     [JsonConverter(typeof(StringJsonConverter))]
     [JsonProperty("udi", NullValueHandling = NullValueHandling.Ignore)]
-    public Udi? Udi { get; }
+    public Udi? Udi { get; set; }
 
     [JsonProperty("url", NullValueHandling = NullValueHandling.Ignore)]
-    public string? Url { get; }
+    public string? Url { get; set; }
 
     public UrlPickerItem(LinkType type, string name, Udi? udi, string? url, string? target) {
         Type = type;
