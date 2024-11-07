@@ -12,9 +12,10 @@ public class NullConverter : PropertyConverterBase {
     public override bool IsConverter(ILegacyElement owner, ILegacyProperty property) {
         return property.EditorAlias switch {
             "CodeMonkey.Seperator" => true,
-            "Skybrud.Umbraco.Redirects" => true,
             "RankOneResultPreview" => true,
             "RankOneDashboard" => true,
+            "Skybrud.Separator" => true,
+            "Skybrud.Umbraco.Redirects" => true,
             _ => false
         };
     }
