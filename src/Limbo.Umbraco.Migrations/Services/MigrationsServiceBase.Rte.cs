@@ -55,6 +55,20 @@ public partial class MigrationsServiceBase {
         string href = link.GetAttributeValue("href", "");
         string dataUdi = link.GetAttributeValue("data-udi", "");
 
+        // If the "href" attribute is a UDI reference to a media, we import that media. If the referenced is already in
+        // the "href" attribute, and not a data attribute, we don't need to modify the element as it's already in the
+        // correct format. Also notice that the REGEX doesn't match until the end of the line. This is because
+        // "localLink" references may also include a fragment part (#)
+        if (RegexUtils.IsMatch(href, @"^\/{localLink:(umb:\/\/media\/([a-z0-9]{32}))", out string udiRaw)) {
+            if (UdiParser.TryParse(udiRaw, out GuidUdi? mediaUdi) && mediaUdi is not null) {
+                ImportMedia(mediaUdi.Guid);
+                return;
+            }
+        }
+
+        // Older Umbraco sites may use the "localLink" syntax, but with a numeric ID. This has been used to link to
+        // content (not media), and as such we can look up the reference content item via the migrations client, and
+        // then update the "localLink" syntax with the content item's UDI instead.
         if (RegexUtils.IsMatch(href, "/{localLink:([0-9]+)}", out int id)) {
 
             // Skip if ignored (eg. if trashed)
@@ -75,6 +89,9 @@ public partial class MigrationsServiceBase {
 
         }
 
+        // Older Umbraco sites may specify the UDI via a data attribute, in which case we remove the "data-udi"
+        // attribute and set/update the "href" attribute instead. Also, if the UDI reference is for a media, we make
+        // sure to import said media
         if (UdiParser.TryParse(dataUdi, out GuidUdi? udi) && udi is not null) {
 
             // Remove the legacy attribute
