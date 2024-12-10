@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 using Limbo.Umbraco.MigrationsClient.Models.Content;
 using Microsoft.Extensions.DependencyInjection;
 using Skybrud.Essentials.Reflection;
+using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Web.Common.DependencyInjection;
 using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.Migrations.Models.Content;

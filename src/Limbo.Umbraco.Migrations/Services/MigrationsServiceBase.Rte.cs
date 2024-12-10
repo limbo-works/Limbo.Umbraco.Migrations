@@ -8,6 +8,7 @@ using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core;
 using Umbraco.Extensions;
 using System.Collections.Generic;
+using Limbo.Umbraco.Migrations.Models.Rte;
 
 namespace Limbo.Umbraco.Migrations.Services;
 
@@ -18,7 +19,7 @@ public partial class MigrationsServiceBase {
     /// </summary>
     /// <param name="input">The RTE input string to be converted.</param>
     /// <returns>An instance of <see cref="string"/> representing the reuslt of the conversion.</returns>
-    public virtual string? ConvertRte(string? input) {
+    public virtual RteModel? ConvertRte(string? input) {
 
         // Return null right away if input is null or white space
         if (string.IsNullOrWhiteSpace(input)) return null;
@@ -35,7 +36,7 @@ public partial class MigrationsServiceBase {
         ConvertRteLinks(document.DocumentNode, ref modified);
 
         // If the HTML was modified, we convert it back to a string - otherwise we return "input" directly
-        return modified ? document.DocumentNode.OuterHtml : input;
+        return new RteModel(modified ? document.DocumentNode.OuterHtml : input);
 
     }
 

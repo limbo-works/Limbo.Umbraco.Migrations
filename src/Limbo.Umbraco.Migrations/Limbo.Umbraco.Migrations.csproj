@@ -4,12 +4,12 @@
 
   <PropertyGroup>
     <LangVersion>12</LangVersion>
-    <TargetFramework>net6</TargetFramework>
+    <TargetFramework>net8</TargetFramework>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>
-    <VersionPrefix>1.0.0-alpha006</VersionPrefix>
+    <VersionPrefix>13.0.0-alpha000</VersionPrefix>
     <VersionSuffix Condition="'$(Configuration)'=='Debug'">build$([System.DateTime]::UtcNow.ToString(`yyyyMMddHHmm`))</VersionSuffix>
     <Company>Limbo</Company>
     <Authors>Anders Bjerner</Authors>
@@ -22,7 +22,7 @@
     <PackageId>Limbo.Umbraco.Migrations</PackageId>
     <PackageTags>Limbo, Umbraco, Migrations</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://packages.limbo.works/limbo.umbraco.migrations/v1/</PackageProjectUrl>
+    <PackageProjectUrl>https://packages.limbo.works/limbo.umbraco.migrations/v13/</PackageProjectUrl>
     <PackageIcon>Limbo.png</PackageIcon>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/limbo-works/Limbo.Umbraco.Migrations</RepositoryUrl>
@@ -32,10 +32,10 @@
   <ItemGroup>
     <PackageReference Include="Limbo.Umbraco.MigrationsClient" Version="1.0.8" />
     <PackageReference Include="Skybrud.Essentials" Version="1.1.57" />
-    <PackageReference Include="Skybrud.Umbraco.GridData" Version="5.0.3" />
-    <PackageReference Include="Umbraco.Cms.Core" Version="[10.0.0,12.0)" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="[10.0.0,12.0)" />
-    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="[10.0.0,12.0)" />
+    <PackageReference Include="Skybrud.Umbraco.GridData" Version="13.0.0" />
+    <PackageReference Include="Umbraco.Cms.Core" Version="[13.0.0,13.999)" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="[13.0.0,13.999)" />
+    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="[13.0.0,13.999)" />
   </ItemGroup>
 
   <!-- Include package icon and README for the NuGet -->
