@@ -14,11 +14,8 @@ public class UmbracoTinyMceConverter : PropertyConverterBase {
     }
 
     public override object? Convert(ILegacyElement owner, ILegacyProperty property) {
-
-        // TODO: Save the value as an object for Umbraco 13
-
         string value = property.Value.ToString();
-        return string.IsNullOrWhiteSpace(value) ? null : MigrationsService.ConvertRte(property.Value.ToString());
+        return string.IsNullOrWhiteSpace(value) ? null : MigrationsService.ConvertRte(property.Value.ToString(), out _);
     }
 
 }

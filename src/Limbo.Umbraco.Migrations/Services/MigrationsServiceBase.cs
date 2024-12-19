@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
+using Limbo.Umbraco.Migrations.Constants;
 using Limbo.Umbraco.Migrations.Exceptions;
 using Limbo.Umbraco.Migrations.Models;
 using Limbo.Umbraco.Migrations.Models.BlockList;
@@ -15,10 +17,13 @@ using Limbo.Umbraco.MigrationsClient.Models.ContentTypes;
 using Limbo.Umbraco.MigrationsClient.Models.Media;
 using Limbo.Umbraco.MigrationsClient.Models.Properties;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
+using Limbo.Umbraco.MigrationsClient.Models.Umbraco;
 using Limbo.Umbraco.MigrationsClient.Models.Umbraco.NestedContent;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Skybrud.Essentials.Exceptions;
+using Skybrud.Essentials.Http.Exceptions;
 using Skybrud.Essentials.Json.Newtonsoft;
 using Skybrud.Essentials.Json.Newtonsoft.Extensions;
 using Skybrud.Essentials.Strings.Extensions;
@@ -31,6 +36,7 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
+using GuidUdi = Umbraco.Cms.Core.GuidUdi;
 
 // ReSharper disable ReturnTypeCanBeNotNullable
 
@@ -215,7 +221,7 @@ public partial class MigrationsServiceBase : IMigrationsService {
             "Image" => ImportMediaImage(source, parent),
             "File" => ImportMediaFile(source, parent),
             "video" => ImportMediaFile(source, parent),
-            _ => throw new Exception($"Unsupported media type: {source.ContentTypeAlias}")
+            _ => throw new Exception($"Unsupported media type: {source.ContentTypeAlias}\r\n\r\nID: {source.Id}\r\nKey: {source.Key}")
         };
 
     }
@@ -315,13 +321,18 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
         string mediaPath = Path.Combine(tempDir, Guid.NewGuid().ToString());
         string filename = Path.GetFileName(umbracoFilePath);
-
-        MigrationsClient.DownloadBytes(source, mediaPath);
+        string? extension = source.GetString("umbracoExtension");
 
         string contentTypeAlias = source.ContentTypeAlias switch {
-            "video" => "umbracoMediaVideo",
-            _ => source.ContentTypeAlias
+            "video" => UmbracoMediaTypes.Video,
+            _ => extension switch {
+                "pdf" => UmbracoMediaTypes.Pdf,
+                "svg" => UmbracoMediaTypes.Svg,
+                _ => throw new MigrationsException($"Unknown file extension '{extension}' for media with key '{source.Key}'.")
+            }
         };
+
+        MigrationsClient.DownloadBytes(source, mediaPath);
 
         IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, contentTypeAlias, MigrationUserId);
         m.Key = source.Key;
@@ -351,6 +362,25 @@ public partial class MigrationsServiceBase : IMigrationsService {
         System.IO.File.Delete(mediaPath);
 
         return m;
+
+    }
+
+    /// <summary>
+    /// Returns whether <paramref name="ex"/> or any of its inner exceptions represents a 404 HTTP response.
+    /// </summary>
+    /// <param name="ex">The exception.</param>
+    /// <returns><see langword="true"/> if <paramref name="ex"/> or any of its inner exceptions represents a 404 HTTP response; otherwise, <see langword="false"/>.</returns>
+    public virtual bool Is404(Exception ex) {
+
+        Exception? scope = ex;
+
+        while (scope is not null) {
+            if (scope is HttpException { StatusCode: HttpStatusCode.NotFound }) return true;
+            if (scope.Message.StartsWith("DreamBroker video with ID ") && scope.Message.EndsWith(" not found.")) return true;
+            scope = scope.InnerException;
+        }
+
+        return false;
 
     }
 
@@ -663,6 +693,52 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
     public virtual UrlPickerList? ConvertLinkPickerItemAsList(LinkPickerItem? item) {
         return ConvertLinkPickerItem(item) is { } result ? new UrlPickerList(result) : null;
+    }
+
+    public virtual UrlPickerList? ConvertMultiUrlPickerList(MultiUrlPickerList? list) {
+
+        if (list is null) return null;
+
+        UrlPickerList temp = [];
+
+        foreach (MultiUrlPickerItem item in list) {
+
+            UrlPickerItem? urlItem = ConvertMultiUrlPickerItem(item);
+            if (urlItem is not null) temp.Add(urlItem);
+
+        }
+
+        return temp.Count == 0 ? null : temp;
+
+    }
+
+    public virtual UrlPickerItem? ConvertMultiUrlPickerItem(MultiUrlPickerItem? item) {
+
+        if (item is null) return null;
+
+        HashSet<string> knownProperties = ["name", "target", "url", "udi", "queryString"];
+
+        foreach (JProperty property in item.JObject.Properties()) {
+            if (knownProperties.Contains(property.Name)) continue;
+            throw new MigrationsException($"Unknown URL picker item property '{property.Name}'...\r\n\r\n{item.JObject}");
+        }
+
+        if (item.Udi is not null) {
+            switch (item.Udi.EntityType) {
+                case UmbracoEntityTypes.Content:
+                    return UrlPickerItem.CreateContentItem(item.Name, new GuidUdi(item.Udi.EntityType, item.Udi.Guid), null, target: item.Target, queryString: item.QueryString);
+                case UmbracoEntityTypes.Media:
+                    IMedia? media = ImportMedia(item.Udi.Guid);
+                    return media is null ? null : UrlPickerItem.CreateMediaItem(media, target: item.Target, queryString: item.QueryString);
+                default:
+                    throw new MigrationsException($"Unsupported entity type '{item.Udi.EntityType}'...\r\n\r\n{item.JObject}");
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(item.Url)) throw new BjernerSaysNoException($"WTF? URL picker item has no URL or UDI:\r\n\r\n{item.JObject}");
+
+        return UrlPickerItem.CreateExternalItem(item.Name, item.Url, item.Target, item.QueryString);
+
     }
 
     #endregion

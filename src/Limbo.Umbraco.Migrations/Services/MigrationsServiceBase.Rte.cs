@@ -8,7 +8,9 @@ using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core;
 using Umbraco.Extensions;
 using System.Collections.Generic;
+using Limbo.Umbraco.Migrations.Models;
 using Limbo.Umbraco.Migrations.Models.Rte;
+using Limbo.Umbraco.MigrationsClient.Models.Media;
 
 namespace Limbo.Umbraco.Migrations.Services;
 
@@ -18,8 +20,12 @@ public partial class MigrationsServiceBase {
     /// Converts the specified RTE <paramref name="input"/> string.
     /// </summary>
     /// <param name="input">The RTE input string to be converted.</param>
+    /// <param name="warnings">When this method returns, holds a list of warnings.</param>
     /// <returns>An instance of <see cref="string"/> representing the reuslt of the conversion.</returns>
-    public virtual RteModel? ConvertRte(string? input) {
+    public virtual RteModel? ConvertRte(string? input, out IReadOnlyList<Warning> warnings) {
+
+        List<Warning> warningsList = [];
+        warnings = warningsList;
 
         // Return null right away if input is null or white space
         if (string.IsNullOrWhiteSpace(input)) return null;
@@ -32,26 +38,26 @@ public partial class MigrationsServiceBase {
         bool modified = false;
 
         // Convert images and links
-        ConvertRteImages(document.DocumentNode, ref modified);
-        ConvertRteLinks(document.DocumentNode, ref modified);
+        ConvertRteImages(document.DocumentNode, warningsList, ref modified);
+        ConvertRteLinks(document.DocumentNode, warningsList, ref modified);
 
         // If the HTML was modified, we convert it back to a string - otherwise we return "input" directly
         return new RteModel(modified ? document.DocumentNode.OuterHtml : input);
 
     }
 
-    protected virtual void ConvertRteLinks(HtmlNode root, ref bool modified) {
+    protected virtual void ConvertRteLinks(HtmlNode root, List<Warning> warnings, ref bool modified) {
 
         IEnumerable<HtmlNode>? anchorLinks = root.Descendants("a");
         if (anchorLinks is null) return;
 
         foreach (HtmlNode link in anchorLinks) {
-            ConvertRteLink(link, ref modified);
+            ConvertRteLink(link, warnings, ref modified);
         }
 
     }
 
-    protected virtual void ConvertRteLink(HtmlNode link, ref bool modified) {
+    protected virtual void ConvertRteLink(HtmlNode link, List<Warning> warnings, ref bool modified) {
 
         string href = link.GetAttributeValue("href", "");
         string dataUdi = link.GetAttributeValue("data-udi", "");
@@ -61,8 +67,12 @@ public partial class MigrationsServiceBase {
         // correct format. Also notice that the REGEX doesn't match until the end of the line. This is because
         // "localLink" references may also include a fragment part (#)
         if (RegexUtils.IsMatch(href, @"^\/{localLink:(umb:\/\/media\/([a-z0-9]{32}))", out string udiRaw)) {
-            if (UdiParser.TryParse(udiRaw, out GuidUdi? mediaUdi) && mediaUdi is not null) {
-                ImportMedia(mediaUdi.Guid);
+            if (UdiParser.TryParse(udiRaw, out GuidUdi? mediaUdi)) {
+                try {
+                    ImportMedia(mediaUdi.Guid);
+                } catch (Exception ex) when (Is404(ex)) {
+                    warnings.Add(new Warning($"Media with key '{mediaUdi.Guid}' not found.", ex));
+                }
                 return;
             }
         }
@@ -93,13 +103,19 @@ public partial class MigrationsServiceBase {
         // Older Umbraco sites may specify the UDI via a data attribute, in which case we remove the "data-udi"
         // attribute and set/update the "href" attribute instead. Also, if the UDI reference is for a media, we make
         // sure to import said media
-        if (UdiParser.TryParse(dataUdi, out GuidUdi? udi) && udi is not null) {
+        if (UdiParser.TryParse(dataUdi, out GuidUdi? udi)) {
 
             // Remove the legacy attribute
             link.Attributes["data-udi"].Remove();
 
             // If UDI reference a media, we import that media
-            if (udi.EntityType == UmbracoEntityTypes.Media) ImportMedia(udi.Guid);
+            if (udi.EntityType == UmbracoEntityTypes.Media) {
+                try {
+                    ImportMedia(udi.Guid);
+                } catch (Exception ex) when (Is404(ex)) {
+                    warnings.Add(new Warning($"Media with key '{udi.Guid}' not found.", ex));
+                }
+            }
 
             // Update the "href" attribute
             link.SetAttributeValue("href", $"/{{localLink:{udi}}}");
@@ -110,31 +126,38 @@ public partial class MigrationsServiceBase {
 
     }
 
-    protected virtual void ConvertRteImages(HtmlNode root, ref bool modified) {
+    protected virtual void ConvertRteImages(HtmlNode root, List<Warning> warnings, ref bool modified) {
 
         IEnumerable<HtmlNode>? images = root.Descendants("img");
         if (images is null) return;
 
         foreach (HtmlNode img in images) {
-            ConvertRteImage(img, ref modified);
+            ConvertRteImage(img, warnings, ref modified);
         }
 
     }
 
-    protected virtual void ConvertRteImage(HtmlNode img, ref bool modified) {
+    protected virtual void ConvertRteImage(HtmlNode img, List<Warning> warnings, ref bool modified) {
 
-        string src = img.GetAttributeValue("src", "");
-        string dataUdi = img.GetAttributeValue("data-udi", "");
+        string src = img.GetAttributeValue("src", "").Trim();
+        string dataUdi = img.GetAttributeValue("data-udi", "").Trim();
 
-        if (UdiParser.TryParse(dataUdi, out GuidUdi? udi) && udi is not null) {
+        if (UdiParser.TryParse(dataUdi, out GuidUdi? udi)) {
 
             switch (udi.EntityType) {
 
                 case UmbracoEntityTypes.Media: {
 
                     // Import the referenced media
-                    IMedia? media = ImportMedia(udi.Guid);
-                    if (media is null) return;
+                    IMedia? media;
+
+                    try {
+                        media = ImportMedia(udi.Guid);
+                        if (media is null) return;
+                    } catch (Exception ex) when(Is404(ex)) {
+                        warnings.Add(new Warning($"Media with key '{udi.Guid}' not found.", ex));
+                        return;
+                    }
 
                     // Try to get the relative path to the media file (aka the URL)
                     if (!media.TryGetMediaPath("umbracoFile", Dependencies.MediaUrlGeneratorCollection, out string? mediaFilePath)) {
@@ -159,7 +182,22 @@ public partial class MigrationsServiceBase {
 
         }
 
-        throw new Exception("Found unhandled <img /> element\r\n\r\n" + img.OuterHtml + "\r\n\r\n");
+        // Handle local media path references
+        if (src.StartsWith("/media/")) {
+            string path = src.Split('?')[0];
+            try {
+                LegacyMedia media = MigrationsClient.GetMediaByPath(path);
+                ImportMedia(media.Key);
+            } catch (Exception ex) when (Is404(ex)) {
+                warnings.Add(new Warning($"Media with path '{path}' not found.", ex));
+            }
+            return;
+        }
+
+        // Handle "external" media path references
+        if (src.Contains("/media/")) {
+            throw new MigrationsException($"Unexpected media URL '{src}' in RTE value.");
+        }
 
     }
 

@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Limbo.Umbraco.Migrations.Models;
 using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.Rte;
-using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
+using Limbo.Umbraco.Migrations.Models.UrlPicker;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
 using Skybrud.Umbraco.GridData.Models;
 using Umbraco.Cms.Core;
@@ -44,7 +45,7 @@ public interface IMigrationsService {
 
     bool TryParseUdi(string? value, [NotNullWhen(true)] out GuidUdi? result);
 
-    RteModel? ConvertRte(string? input);
+    RteModel? ConvertRte(string? input, out IReadOnlyList<Warning> warnings);
 
     UrlPickerList? ConvertLinkPickerList(LinkPickerList? list);
 
