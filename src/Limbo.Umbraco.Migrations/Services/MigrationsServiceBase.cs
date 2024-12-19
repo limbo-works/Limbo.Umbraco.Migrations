@@ -7,7 +7,7 @@ using Limbo.Umbraco.Migrations.Exceptions;
 using Limbo.Umbraco.Migrations.Models;
 using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.Content;
-using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
+using Limbo.Umbraco.Migrations.Models.UrlPicker;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
 using Limbo.Umbraco.MigrationsClient.Models.Content;

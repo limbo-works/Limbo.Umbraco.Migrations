@@ -1,5 +1,5 @@
 ﻿using System;
-using Limbo.Umbraco.Migrations.Models.UrlPickerItem;
+using Limbo.Umbraco.Migrations.Models.UrlPicker;
 using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;

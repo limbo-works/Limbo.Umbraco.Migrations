@@ -3,8 +3,9 @@ using Skybrud.Essentials.Json.Newtonsoft.Converters;
 using Skybrud.Essentials.Json.Newtonsoft.Converters.Enums;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
+using Umbraco.Extensions;
 
-namespace Limbo.Umbraco.Migrations.Models.UrlPickerItem;
+namespace Limbo.Umbraco.Migrations.Models.UrlPicker;
 
 public class UrlPickerItem {
 
@@ -45,16 +46,20 @@ public class UrlPickerItem {
         QueryString = queryString;
     }
 
-    public static UrlPickerItem CreateContentItem(string name, Udi udi, string url, string? target) {
+    public static UrlPickerItem CreateContentItem(string name, Udi udi, string? url, string? target) {
         return new UrlPickerItem(LinkType.Content, name, udi, url, target);
     }
 
-    public static UrlPickerItem CreateContentItem(string name, Udi udi, string url, string? target, string? queryString) {
+    public static UrlPickerItem CreateContentItem(string name, Udi udi, string? url, string? target, string? queryString) {
         return new UrlPickerItem(LinkType.Content, name, udi, url, target, queryString);
     }
 
     public static UrlPickerItem CreateMediaItem(string name, Udi udi, string url, string? target) {
         return new UrlPickerItem(LinkType.Media, name, udi, url, target);
+    }
+
+    public static UrlPickerItem CreateMediaItem(IMedia media, string? url = null, string? target = null, string? queryString = null) {
+        return new UrlPickerItem(LinkType.Media, media.Name ?? string.Empty, media.GetUdi(), url, target, queryString);
     }
 
     public static UrlPickerItem CreateMediaItem(string name, Udi udi, string url, string? target, string? queryString) {

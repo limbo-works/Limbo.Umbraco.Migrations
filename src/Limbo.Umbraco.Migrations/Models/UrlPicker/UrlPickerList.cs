@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace Limbo.Umbraco.Migrations.Models.UrlPickerItem;
+namespace Limbo.Umbraco.Migrations.Models.UrlPicker;
 
 public class UrlPickerList : IReadOnlyList<UrlPickerItem> {
 
