@@ -326,8 +326,18 @@ public partial class MigrationsServiceBase : IMigrationsService {
         string contentTypeAlias = source.ContentTypeAlias switch {
             "video" => UmbracoMediaTypes.Video,
             _ => extension switch {
+                "doc" => UmbracoMediaTypes.File,
+                "docx" => UmbracoMediaTypes.File,
+                "gif" => UmbracoMediaTypes.Image,
+                "jfif" => UmbracoMediaTypes.File,
+                "jpg" => UmbracoMediaTypes.Image,
+                "jpeg" => UmbracoMediaTypes.Image,
                 "pdf" => UmbracoMediaTypes.Pdf,
+                "png" => UmbracoMediaTypes.Image,
+                "pptx" => UmbracoMediaTypes.File,
                 "svg" => UmbracoMediaTypes.Svg,
+                "xls" => UmbracoMediaTypes.File,
+                "xlsx" => UmbracoMediaTypes.File,
                 _ => throw new MigrationsException($"Unknown file extension '{extension}' for media with key '{source.Key}'.")
             }
         };
