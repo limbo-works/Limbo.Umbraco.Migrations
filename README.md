@@ -34,14 +34,14 @@
 
 ### Installation
 
-Install via [**NuGet**](https://www.nuget.org/packages/Limbo.Umbraco.Migrations/13.0.0-alpha002) - either via the .NET CLI:
+Install via [**NuGet**](https://www.nuget.org/packages/Limbo.Umbraco.Migrations/13.0.0-alpha003) - either via the .NET CLI:
 
 ```
-dotnet add package Limbo.Umbraco.Migrations --version 13.0.0-alpha002
+dotnet add package Limbo.Umbraco.Migrations --version 13.0.0-alpha003
 ```
 
 or the Nuget package manager:
 
 ```
-Install-Package Limbo.Umbraco.Migrations -Version 13.0.0-alpha002
+Install-Package Limbo.Umbraco.Migrations -Version 13.0.0-alpha003
 ```
