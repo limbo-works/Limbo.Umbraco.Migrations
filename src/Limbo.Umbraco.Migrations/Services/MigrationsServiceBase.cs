@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -311,6 +312,26 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
     }
 
+    protected virtual bool TryGetMediaTypeAliasFromExtension(string extension, [NotNullWhen(true)] out string? mediaTypeAlias) {
+        mediaTypeAlias = extension switch {
+            "doc" => UmbracoMediaTypes.File,
+            "docx" => UmbracoMediaTypes.File,
+            "gif" => UmbracoMediaTypes.Image,
+            "jfif" => UmbracoMediaTypes.File,
+            "jpg" => UmbracoMediaTypes.Image,
+            "jpeg" => UmbracoMediaTypes.Image,
+            "pdf" => UmbracoMediaTypes.Pdf,
+            "png" => UmbracoMediaTypes.Image,
+            "pptx" => UmbracoMediaTypes.File,
+            "svg" => UmbracoMediaTypes.Svg,
+            "xls" => UmbracoMediaTypes.File,
+            "xlsx" => UmbracoMediaTypes.File,
+            "zip" => UmbracoMediaTypes.File,
+            _ => null
+        };
+        return mediaTypeAlias is not null;
+    }
+
     protected virtual IMedia ImportMediaFile(LegacyMedia source, IMedia? parent) {
 
         string? umbracoFilePath = source.JObject.GetStringByPath("properties.umbracoFile.value.src") ?? source.JObject.GetStringByPath("properties.umbracoFile.value");
@@ -323,24 +344,15 @@ public partial class MigrationsServiceBase : IMigrationsService {
         string filename = Path.GetFileName(umbracoFilePath);
         string? extension = source.GetString("umbracoExtension");
 
-        string contentTypeAlias = source.ContentTypeAlias switch {
-            "video" => UmbracoMediaTypes.Video,
-            _ => extension switch {
-                "doc" => UmbracoMediaTypes.File,
-                "docx" => UmbracoMediaTypes.File,
-                "gif" => UmbracoMediaTypes.Image,
-                "jfif" => UmbracoMediaTypes.File,
-                "jpg" => UmbracoMediaTypes.Image,
-                "jpeg" => UmbracoMediaTypes.Image,
-                "pdf" => UmbracoMediaTypes.Pdf,
-                "png" => UmbracoMediaTypes.Image,
-                "pptx" => UmbracoMediaTypes.File,
-                "svg" => UmbracoMediaTypes.Svg,
-                "xls" => UmbracoMediaTypes.File,
-                "xlsx" => UmbracoMediaTypes.File,
-                _ => throw new MigrationsException($"Unknown file extension '{extension}' for media with key '{source.Key}'.")
-            }
-        };
+        string contentTypeAlias;
+
+        if (source.ContentTypeAlias == "video") {
+            contentTypeAlias = UmbracoMediaTypes.Video;
+        } else if (extension is not null && TryGetMediaTypeAliasFromExtension(extension, out string? result)) {
+            contentTypeAlias = result;
+        } else {
+            throw new MigrationsException($"Unknown file extension '{extension}' for media with key '{source.Key}'.");
+        }
 
         MigrationsClient.DownloadBytes(source, mediaPath);
 

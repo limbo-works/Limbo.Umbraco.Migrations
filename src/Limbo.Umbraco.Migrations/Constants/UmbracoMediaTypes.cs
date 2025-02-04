@@ -18,4 +18,6 @@ public static class UmbracoMediaTypes {
 
     public const string Svg = VectorGraphics;
 
+    public const string Zip = File;
+
 }
