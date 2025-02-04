@@ -71,4 +71,22 @@ public static class MigrationsExtensions {
         return list is null || list.Count == 0 ? null : list;
     }
 
+    /// <summary>
+    /// Returns <see langword="null"/> if <paramref name="list"/> is also <see langword="null"/>, otherwise, <paramref name="list"/> is returned unmodified.
+    /// </summary>
+    /// <param name="list">The list.</param>
+    /// <returns><paramref name="list"/> if not <see langword="null"/>; otherwise, <see langword="null"/>.</returns>
+    public static MediaPickerList? NullIfEmpty(this MediaPickerList? list) {
+        return list is null || list.Count == 0 ? null : list;
+    }
+
+    /// <summary>
+    /// Returns an instance of <see cref="ILegacyContentItem"/> representing the parent node of <paramref name="content"/>, or <see langword="null"/> if <paramref name="content"/> doesn't have a parent.
+    /// </summary>
+    /// <param name="content">The content node to get the parent for.</param>
+    /// <returns>An instance of <see cref="ILegacyContentItem"/> if successful; otherwise, <see langword="null"/>.</returns>
+    public static ILegacyContentItem? GetParent(this ILegacyContent content) {
+        return content.Path.LastOrDefault();
+    }
+
 }
