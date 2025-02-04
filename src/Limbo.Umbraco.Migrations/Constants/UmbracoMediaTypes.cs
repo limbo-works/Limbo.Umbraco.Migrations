@@ -16,6 +16,8 @@ public static class UmbracoMediaTypes {
 
     public const string Pdf = Article;
 
+    public const string Ppt = File;
+
     public const string Svg = VectorGraphics;
 
     public const string Zip = File;
