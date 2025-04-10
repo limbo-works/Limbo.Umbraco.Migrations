@@ -314,8 +314,10 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
     protected virtual bool TryGetMediaTypeAliasFromExtension(string extension, [NotNullWhen(true)] out string? mediaTypeAlias) {
         mediaTypeAlias = extension switch {
+            "ai" => UmbracoMediaTypes.File,
             "doc" => UmbracoMediaTypes.File,
             "docx" => UmbracoMediaTypes.File,
+            "eps" => UmbracoMediaTypes.File,
             "gif" => UmbracoMediaTypes.Image,
             "jfif" => UmbracoMediaTypes.File,
             "jpg" => UmbracoMediaTypes.Image,
@@ -325,6 +327,7 @@ public partial class MigrationsServiceBase : IMigrationsService {
             "png" => UmbracoMediaTypes.Image,
             "ppt" => UmbracoMediaTypes.File,
             "pptx" => UmbracoMediaTypes.File,
+            "psd" => UmbracoMediaTypes.File,
             "svg" => UmbracoMediaTypes.Svg,
             "xls" => UmbracoMediaTypes.File,
             "xlsx" => UmbracoMediaTypes.File,
