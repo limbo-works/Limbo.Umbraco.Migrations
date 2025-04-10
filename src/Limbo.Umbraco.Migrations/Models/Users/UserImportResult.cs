@@ -3,15 +3,15 @@ using Umbraco.Cms.Core.Models.Membership;
 
 namespace Limbo.Umbraco.Migrations.Models.Users;
 
-public class ImportUserResult {
+public class UserImportResult {
 
     public LegacyUser LegacyUser { get; }
 
     public IUser UmbracoUser { get; }
 
-    public ImportUserStatus Status { get; }
+    public UserImportStatus Status { get; }
 
-    public ImportUserResult(LegacyUser legacyUser, IUser umbracoUser, ImportUserStatus status) {
+    public UserImportResult(LegacyUser legacyUser, IUser umbracoUser, UserImportStatus status) {
         LegacyUser = legacyUser;
         UmbracoUser = umbracoUser;
         Status = status;

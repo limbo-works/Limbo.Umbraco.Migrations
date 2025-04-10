@@ -10,8 +10,8 @@ public partial class MigrationsServiceBase {
     /// Imports a legacy user into Umbraco.
     /// </summary>
     /// <param name="user">The legacy user.</param>
-    /// <returns>An instance of <see cref="ImportUserResult"/> representing the result of the import.</returns>
-    public virtual ImportUserResult ImportUser(LegacyUser user) {
+    /// <returns>An instance of <see cref="UserImportResult"/> representing the result of the import.</returns>
+    public virtual UserImportResult ImportUser(LegacyUser user) {
 
         IUser? umbracoUser = Dependencies.UserService.GetByEmail(user.Email);
 
@@ -26,7 +26,7 @@ public partial class MigrationsServiceBase {
 
             Dependencies.UserService.Save(umbracoUser);
 
-            return new ImportUserResult(user, umbracoUser, ImportUserStatus.Created);
+            return new UserImportResult(user, umbracoUser, UserImportStatus.Created);
 
         }
 
@@ -37,11 +37,11 @@ public partial class MigrationsServiceBase {
 
             Dependencies.UserService.Save(umbracoUser);
 
-            return new ImportUserResult(user, umbracoUser, ImportUserStatus.Updated);
+            return new UserImportResult(user, umbracoUser, UserImportStatus.Updated);
 
         }
 
-        return new ImportUserResult(user, umbracoUser, ImportUserStatus.NotModified);
+        return new UserImportResult(user, umbracoUser, UserImportStatus.NotModified);
 
     }
 

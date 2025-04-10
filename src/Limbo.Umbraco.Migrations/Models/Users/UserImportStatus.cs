@@ -1,6 +1,6 @@
 ﻿namespace Limbo.Umbraco.Migrations.Models.Users;
 
-public enum ImportUserStatus {
+public enum UserImportStatus {
     Created,
     Updated,
     NotModified
