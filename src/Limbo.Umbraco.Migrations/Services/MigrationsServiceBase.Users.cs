@@ -1,4 +1,5 @@
-﻿using Limbo.Umbraco.Migrations.Models.Users;
+﻿using System;
+using Limbo.Umbraco.Migrations.Models.Users;
 using Limbo.Umbraco.MigrationsClient.Models.Users;
 using Umbraco.Cms.Core.Models.Membership;
 
@@ -13,35 +14,44 @@ public partial class MigrationsServiceBase {
     /// <returns>An instance of <see cref="UserImportResult"/> representing the result of the import.</returns>
     public virtual UserImportResult ImportUser(LegacyUser user) {
 
-        IUser? umbracoUser = Dependencies.UserService.GetByEmail(user.Email);
+        try {
 
-        // TODO: handle user avatars...
+            IUser? umbracoUser = Dependencies.UserService.GetByEmail(user.Email);
 
-        if (umbracoUser is null) {
+            // TODO: handle user avatars...
 
-            umbracoUser = Dependencies.UserService.CreateUserWithIdentity(user.Email, user.Email);
-            umbracoUser.Name = user.Name;
-            umbracoUser.Language = user.Language;
-            umbracoUser.CreateDate = user.CreateDate.DateTime;
+            if (umbracoUser is null) {
 
-            Dependencies.UserService.Save(umbracoUser);
+                umbracoUser = Dependencies.UserService.CreateUserWithIdentity(user.Email, user.Email);
+                umbracoUser.Name = user.Name;
+                umbracoUser.Language = user.Language;
+                umbracoUser.CreateDate = user.CreateDate.DateTime;
 
-            return new UserImportResult(user, umbracoUser, UserImportStatus.Created);
+                Dependencies.UserService.Save(umbracoUser);
+
+                return new UserImportResult(user, umbracoUser, UserImportStatus.Created);
+
+            }
+
+            if (umbracoUser.Name != user.Name || umbracoUser.Language != user.Language) {
+
+                umbracoUser.Name = user.Name;
+                umbracoUser.Language = user.Language;
+
+                Dependencies.UserService.Save(umbracoUser);
+
+                return new UserImportResult(user, umbracoUser, UserImportStatus.Updated);
+
+            }
+
+            return new UserImportResult(user, umbracoUser, UserImportStatus.NotModified);
+
+        } catch (Exception ex) {
+
+            return new UserImportResult(user, ex);
+
 
         }
-
-        if (umbracoUser.Name != user.Name || umbracoUser.Language != user.Language) {
-
-            umbracoUser.Name = user.Name;
-            umbracoUser.Language = user.Language;
-
-            Dependencies.UserService.Save(umbracoUser);
-
-            return new UserImportResult(user, umbracoUser, UserImportStatus.Updated);
-
-        }
-
-        return new UserImportResult(user, umbracoUser, UserImportStatus.NotModified);
 
     }
 

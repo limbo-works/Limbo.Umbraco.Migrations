@@ -3,5 +3,6 @@
 public enum UserImportStatus {
     Created,
     Updated,
-    NotModified
+    NotModified,
+    Failed
 }
