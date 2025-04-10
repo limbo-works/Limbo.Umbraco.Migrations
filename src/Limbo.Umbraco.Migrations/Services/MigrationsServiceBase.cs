@@ -458,38 +458,95 @@ public partial class MigrationsServiceBase : IMigrationsService {
             modified = true;
         }
 
-        foreach (var property in model.Properties) {
-
+        foreach (KeyValuePair<string, object?> property in model.Properties) {
             object? current = content.GetValue(property.Key);
-
             switch (property.Value) {
-
-                case null:
-                case int:
-                case string:
-                case bool:
-                    content.SetValue(property.Key, property.Value);
-                    modified |= current != property.Value;
-                    break;
-
-                case DateTime dt:
-                    content.SetValue(property.Key, dt);
-                    modified |= current != property.Value;
-                    break;
-
-                default:
-                    if (property.Value.GetType().FullName!.StartsWith("System.")) throw new Exception("WTF? " + property.Value.GetType() + " => " + property.Value);
-                    string newValue = JToken.FromObject(property.Value).ToString(Formatting.None);
-                    content.SetValue(property.Key, newValue);
-                    modified |= !Equals(current, newValue);
-                    break;
-
+                case null: SetNullValue(content, property.Key, current, property.Value, ref modified); break;
+                case int value: SetInt32Value(content, property.Key, current, value, ref modified); break;
+                case bool value: SetBooleanValue(content, property.Key, current, value, ref modified); break;
+                case string value: SetStringValue(content, property.Key, current, value, ref modified); break;
+                case Guid value: SetGuidValue(content, property.Key, current, value, ref modified); break;
+                case DateTime value: SetDateTimeValue(content, property.Key, current, value, ref modified); break;
+                default: SetValue(content, property.Key, current, property.Value, ref modified); break;
             }
 
         }
 
         return modified;
 
+    }
+
+    protected virtual void SetNullValue(IContentBase content, string propertyAlias, object? existingValue, object? newValue, ref bool modified) {
+        content.SetValue(propertyAlias, newValue);
+        modified |= existingValue != newValue;
+    }
+
+    protected virtual void SetInt32Value(IContentBase content, string propertyAlias, object? existingValue, int newValue, ref bool modified) {
+        // TODO: old code - can possibly be simplified
+        int? currentValue = existingValue as int?;
+        int? newValueNullable = newValue;
+        if (currentValue == newValue) return;
+        content.SetValue(propertyAlias, newValueNullable);
+        modified = true;
+    }
+
+    protected virtual void SetBooleanValue(IContentBase content, string propertyAlias, object? existingValue, bool newValue, ref bool modified) {
+        // TODO: old code - can possibly be simplified
+        int currentValueInt = existingValue switch { bool b => b ? 1 : 0, 1 => 1, _ => 0 };
+        int newValueInt = newValue ? 1 : 0;
+        if (currentValueInt == newValueInt) return;
+        content.SetValue(propertyAlias, newValueInt);
+        modified = true;
+    }
+
+    protected virtual void SetStringValue(IContentBase content, string propertyAlias, object? existingValue, string newValue, ref bool modified) {
+        if (existingValue?.ToString() == newValue) return;
+        content.SetValue(propertyAlias, newValue);
+        modified = true;
+    }
+
+    protected virtual void SetDateTimeValue(IContentBase content, string propertyAlias, object? existingValue, DateTime newValue, ref bool modified) {
+
+        // TODO: old code - can possibly be simplified
+
+        if (existingValue is null) {
+            modified = true;
+            content.SetValue(propertyAlias, newValue);
+            return;
+        }
+
+        if (existingValue is DateTime currentDateTime && currentDateTime == newValue) return;
+
+        modified = true;
+        content.SetValue(propertyAlias, newValue);
+
+    }
+
+    protected virtual void SetGuidValue(IContentBase content, string propertyAlias, object? existingValue, Guid newValue, ref bool modified) {
+        if (existingValue?.ToString() == newValue.ToString()) return;
+        content.SetValue(propertyAlias, newValue);
+        modified = true;
+    }
+
+    protected virtual void SetValue(IContentBase content, string propertyAlias, object? existingValue, object newValue, ref bool modified) {
+
+        JToken newToken = ToJson(newValue);
+        string? newValueString = newToken.Type == JTokenType.String ? newToken.Value<string>() : newToken.ToString(Formatting.None);
+
+        content.SetValue(propertyAlias, newValueString);
+        modified |= !Equals(existingValue, newValueString);
+
+    }
+
+    /// <summary>
+    /// Convert the specified <paramref name="value"/> to a JSON token.
+    ///
+    /// The value is converted using JSON.net's default settings. Override the method if you need to control how property values are converted and serialized
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <returns>An instance of <see cref="JToken"/>.</returns>
+    public virtual JToken ToJson(object value) {
+        return JToken.FromObject(value);
     }
 
     protected virtual void UpdateProperties(LegacyMedia source, IMedia media) {

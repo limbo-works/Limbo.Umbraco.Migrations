@@ -6,6 +6,7 @@ using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.Rte;
 using Limbo.Umbraco.Migrations.Models.UrlPicker;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
+using Newtonsoft.Json.Linq;
 using Skybrud.Umbraco.GridData.Models;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
@@ -52,5 +53,7 @@ public interface IMigrationsService {
     UrlPickerItem? ConvertLinkPickerItem(LinkPickerItem? item);
 
     UrlPickerList? ConvertLinkPickerItemAsList(LinkPickerItem? item);
+
+    JToken ToJson(object value);
 
 }
