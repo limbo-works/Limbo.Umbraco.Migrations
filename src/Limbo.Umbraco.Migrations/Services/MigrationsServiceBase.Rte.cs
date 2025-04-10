@@ -21,7 +21,7 @@ public partial class MigrationsServiceBase {
     /// </summary>
     /// <param name="input">The RTE input string to be converted.</param>
     /// <param name="warnings">When this method returns, holds a list of warnings.</param>
-    /// <returns>An instance of <see cref="string"/> representing the reuslt of the conversion.</returns>
+    /// <returns>An instance of <see cref="string"/> representing the result of the conversion.</returns>
     public virtual RteModel? ConvertRte(string? input, out IReadOnlyList<Warning> warnings) {
 
         List<Warning> warningsList = [];
