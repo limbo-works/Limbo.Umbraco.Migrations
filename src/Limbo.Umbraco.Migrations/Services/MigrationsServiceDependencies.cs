@@ -22,6 +22,7 @@ public class MigrationsServiceDependencies {
     public IContentService ContentService { get; }
     public IMediaService MediaService { get; }
     public IMemberService MemberService { get; }
+    public IUserService UserService { get; }
     public MediaFileManager MediaFileManager { get; }
     public MediaUrlGeneratorCollection MediaUrlGeneratorCollection { get; }
     public IShortStringHelper ShortStringHelper { get; }
@@ -37,6 +38,7 @@ public class MigrationsServiceDependencies {
         IContentService contentService,
         IMediaService mediaService,
         IMemberService memberService,
+        IUserService userService,
         MediaFileManager mediaFileManager,
         MediaUrlGeneratorCollection mediaUrlGeneratorCollection,
         IShortStringHelper shortStringHelper,
@@ -52,6 +54,7 @@ public class MigrationsServiceDependencies {
         ContentService = contentService;
         MediaService = mediaService;
         MemberService = memberService;
+        UserService = userService;
         MediaFileManager = mediaFileManager;
         MediaUrlGeneratorCollection = mediaUrlGeneratorCollection;
         ShortStringHelper = shortStringHelper;
