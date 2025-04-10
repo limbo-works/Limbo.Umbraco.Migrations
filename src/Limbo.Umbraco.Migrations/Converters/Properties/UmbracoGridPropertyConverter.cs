@@ -4,20 +4,20 @@ using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
 using Limbo.Umbraco.MigrationsClient.Models.Properties;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Grid;
+using Limbo.Umbraco.MigrationsClient.Parsers.Skybrud;
 using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Json.Newtonsoft;
-using Skybrud.Umbraco.GridData.Factories;
-using Skybrud.Umbraco.GridData.Models;
 
 namespace Limbo.Umbraco.Migrations.Converters.Properties;
 
 public class UmbracoGridPropertyConverter : PropertyConverterBase {
 
-    private readonly IGridFactory _gridFactory;
+    private readonly SkybrudGridDataParser _gridParser;
     private readonly IGridDataModelConverter _gridDataModelConverter;
 
-    public UmbracoGridPropertyConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient, IGridFactory gridFactory, IGridDataModelConverter gridDataModelConverter) : base(migrationsService, migrationsClient) {
-        _gridFactory = gridFactory;
+    public UmbracoGridPropertyConverter(IMigrationsService migrationsService, IMigrationsClient migrationsClient, SkybrudGridDataParser gridParser, IGridDataModelConverter gridDataModelConverter) : base(migrationsService, migrationsClient) {
+        _gridParser = gridParser;
         _gridDataModelConverter = gridDataModelConverter;
     }
 
@@ -32,7 +32,7 @@ public class UmbracoGridPropertyConverter : PropertyConverterBase {
         try {
 
             // Parse the legacy JSON into a GridDataModel instance (control values won't be strongly typed)
-            GridDataModel model = _gridFactory.CreateGridModel(null!, null!, json, false);
+            GridDataModel model = _gridParser.ParseGridModel(json, owner, property);
 
             // Convert the grid data model to something else
             return _gridDataModelConverter.Convert(owner, property, model);

@@ -1,6 +1,6 @@
 ﻿using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.MigrationsClient.Models;
-using Skybrud.Umbraco.GridData.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Grid;
 
 namespace Limbo.Umbraco.Migrations.Converters.Grid;
 

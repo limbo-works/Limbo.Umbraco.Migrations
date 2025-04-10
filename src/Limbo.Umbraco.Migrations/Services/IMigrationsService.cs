@@ -5,9 +5,9 @@ using Limbo.Umbraco.Migrations.Models;
 using Limbo.Umbraco.Migrations.Models.BlockList;
 using Limbo.Umbraco.Migrations.Models.Rte;
 using Limbo.Umbraco.Migrations.Models.UrlPicker;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Grid;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
 using Newtonsoft.Json.Linq;
-using Skybrud.Umbraco.GridData.Models;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -34,13 +34,9 @@ public interface IMigrationsService {
 
     BlockListContentData<T> CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel;
 
-    BlockListContentData<T> CreateBlockListContentData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel;
-
     BlockListSettingsData<T> CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel;
 
     BlockListSettingsData<T> CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel;
-
-    BlockListSettingsData<T> CreateBlockListSettingsData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel;
 
     GuidUdi ParseGuidUdi(string value);
 

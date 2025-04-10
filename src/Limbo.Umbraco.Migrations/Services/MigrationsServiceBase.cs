@@ -17,6 +17,7 @@ using Limbo.Umbraco.MigrationsClient.Models.Content;
 using Limbo.Umbraco.MigrationsClient.Models.ContentTypes;
 using Limbo.Umbraco.MigrationsClient.Models.Media;
 using Limbo.Umbraco.MigrationsClient.Models.Properties;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Grid;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
 using Limbo.Umbraco.MigrationsClient.Models.Umbraco;
 using Limbo.Umbraco.MigrationsClient.Models.Umbraco.NestedContent;
@@ -28,7 +29,6 @@ using Skybrud.Essentials.Http.Exceptions;
 using Skybrud.Essentials.Json.Newtonsoft;
 using Skybrud.Essentials.Json.Newtonsoft.Extensions;
 using Skybrud.Essentials.Strings.Extensions;
-using Skybrud.Umbraco.GridData.Models;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Extensions;
@@ -636,22 +636,12 @@ public partial class MigrationsServiceBase : IMigrationsService {
         return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
     }
 
-    public virtual BlockListContentData<T> CreateBlockListContentData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel {
-        Type type = typeof(BlockListContentData<>).MakeGenericType(typeof(T));
-        return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
-    }
-
     public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel {
         Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
         return (BlockListSettingsData<T>) Activator.CreateInstance(type, key, GetModelType<T>())!;
     }
 
     public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel {
-        Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
-        return (BlockListSettingsData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
-    }
-
-    public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(MigrationsClient.Models.Skybrud.Grid.GridControl control) where T : PublishedElementModel {
         Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
         return (BlockListSettingsData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
     }

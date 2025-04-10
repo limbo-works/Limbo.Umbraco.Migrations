@@ -2,7 +2,7 @@
 using Limbo.Umbraco.Migrations.Services;
 using Limbo.Umbraco.MigrationsClient;
 using Limbo.Umbraco.MigrationsClient.Models;
-using Skybrud.Umbraco.GridData.Models;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Grid;
 
 namespace Limbo.Umbraco.Migrations.Converters.Grid;
 

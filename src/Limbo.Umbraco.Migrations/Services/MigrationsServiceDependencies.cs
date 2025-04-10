@@ -3,7 +3,6 @@ using Limbo.Umbraco.Migrations.Converters.Properties;
 using Limbo.Umbraco.MigrationsClient;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Skybrud.Umbraco.GridData.Factories;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Services;
@@ -28,7 +27,6 @@ public class MigrationsServiceDependencies {
     public IShortStringHelper ShortStringHelper { get; }
     public PropertyConverterCollection PropertyConverterCollection { get; }
     public IContentTypeBaseServiceProvider ContentTypeBaseServiceProvider { get; }
-    public IGridFactory GridFactory { get; }
     public GridControlConverterCollection GridControlConverters { get; }
     public IMigrationsClient MigrationsClient { get; }
     public IUmbracoContext UmbracoContext => _umbracoContextAccessor.GetRequiredUmbracoContext();
@@ -44,7 +42,6 @@ public class MigrationsServiceDependencies {
         IShortStringHelper shortStringHelper,
         PropertyConverterCollection propertyConverterCollection,
         IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
-        IGridFactory gridFactory,
         GridControlConverterCollection gridControlConverters,
         IMigrationsClient migrationsClient,
         IUmbracoContextAccessor umbracoContextAccessor) {
@@ -60,7 +57,6 @@ public class MigrationsServiceDependencies {
         ShortStringHelper = shortStringHelper;
         PropertyConverterCollection = propertyConverterCollection;
         ContentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
-        GridFactory = gridFactory;
         GridControlConverters = gridControlConverters;
         MigrationsClient = migrationsClient;
     }
