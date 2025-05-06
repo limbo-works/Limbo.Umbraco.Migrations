@@ -17,6 +17,7 @@ using Limbo.Umbraco.MigrationsClient.Models.Content;
 using Limbo.Umbraco.MigrationsClient.Models.ContentTypes;
 using Limbo.Umbraco.MigrationsClient.Models.Media;
 using Limbo.Umbraco.MigrationsClient.Models.Properties;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Elements;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Grid;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.LinkPicker;
 using Limbo.Umbraco.MigrationsClient.Models.Umbraco;
@@ -472,40 +473,82 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
         }
 
+        foreach (MigrationsVariantModel variant in model.Variants.Values) {
+
+            content.SetCultureName(variant.Name, variant.CultureName);
+
+            foreach (KeyValuePair<string, object?> property in variant.Properties) {
+
+                object? current = content.GetValue(property.Key, variant.CultureName);
+
+                switch (property.Value) {
+                    case null: SetNullValue(content, property.Key, current, property.Value, variant.CultureName, ref modified); break;
+                    case int value: SetInt32Value(content, property.Key, current, value, variant.CultureName, ref modified); break;
+                    case bool value: SetBooleanValue(content, property.Key, current, value, variant.CultureName, ref modified); break;
+                    case string value: SetStringValue(content, property.Key, current, value, variant.CultureName, ref modified); break;
+                    case Guid value: SetGuidValue(content, property.Key, current, value, variant.CultureName, ref modified); break;
+                    case DateTime value: SetDateTimeValue(content, property.Key, current, value, variant.CultureName, ref modified); break;
+                    default: SetValue(content, property.Key, current, property.Value, variant.CultureName, ref modified); break;
+                }
+
+            }
+
+        }
+
         return modified;
 
     }
 
-    protected virtual void SetNullValue(IContentBase content, string propertyAlias, object? existingValue, object? newValue, ref bool modified) {
-        content.SetValue(propertyAlias, newValue);
+    protected void SetNullValue(IContentBase content, string propertyAlias, object? existingValue, object? newValue, ref bool modified) {
+        SetNullValue(content, propertyAlias, existingValue, newValue, null, ref modified);
+    }
+
+    protected virtual void SetNullValue(IContentBase content, string propertyAlias, object? existingValue, object? newValue, string? culture, ref bool modified) {
+        content.SetValue(propertyAlias, newValue, culture);
         modified |= existingValue != newValue;
     }
 
-    protected virtual void SetInt32Value(IContentBase content, string propertyAlias, object? existingValue, int newValue, ref bool modified) {
+    protected void SetInt32Value(IContentBase content, string propertyAlias, object? existingValue, int newValue, ref bool modified) {
+        SetInt32Value(content, propertyAlias, existingValue, newValue, null, ref modified);
+    }
+
+    protected virtual void SetInt32Value(IContentBase content, string propertyAlias, object? existingValue, int newValue, string? culture, ref bool modified) {
         // TODO: old code - can possibly be simplified
         int? currentValue = existingValue as int?;
         int? newValueNullable = newValue;
         if (currentValue == newValue) return;
-        content.SetValue(propertyAlias, newValueNullable);
+        content.SetValue(propertyAlias, newValueNullable, culture);
         modified = true;
     }
 
-    protected virtual void SetBooleanValue(IContentBase content, string propertyAlias, object? existingValue, bool newValue, ref bool modified) {
+    protected void SetBooleanValue(IContentBase content, string propertyAlias, object? existingValue, bool newValue, ref bool modified) {
+        SetBooleanValue(content, propertyAlias, existingValue, newValue, null, ref modified);
+    }
+
+    protected virtual void SetBooleanValue(IContentBase content, string propertyAlias, object? existingValue, bool newValue, string? culture, ref bool modified) {
         // TODO: old code - can possibly be simplified
         int currentValueInt = existingValue switch { bool b => b ? 1 : 0, 1 => 1, _ => 0 };
         int newValueInt = newValue ? 1 : 0;
         if (currentValueInt == newValueInt) return;
-        content.SetValue(propertyAlias, newValueInt);
+        content.SetValue(propertyAlias, newValueInt, culture);
         modified = true;
     }
 
-    protected virtual void SetStringValue(IContentBase content, string propertyAlias, object? existingValue, string newValue, ref bool modified) {
+    protected void SetStringValue(IContentBase content, string propertyAlias, object? existingValue, string newValue, ref bool modified) {
+        SetStringValue(content, propertyAlias, existingValue, newValue, null, ref modified);
+    }
+
+    protected virtual void SetStringValue(IContentBase content, string propertyAlias, object? existingValue, string newValue, string? culture, ref bool modified) {
         if (existingValue?.ToString() == newValue) return;
-        content.SetValue(propertyAlias, newValue);
+        content.SetValue(propertyAlias, newValue, culture);
         modified = true;
     }
 
-    protected virtual void SetDateTimeValue(IContentBase content, string propertyAlias, object? existingValue, DateTime newValue, ref bool modified) {
+    protected void SetDateTimeValue(IContentBase content, string propertyAlias, object? existingValue, DateTime newValue, ref bool modified) {
+        SetDateTimeValue(content, propertyAlias, existingValue, newValue, null, ref modified);
+    }
+
+    protected virtual void SetDateTimeValue(IContentBase content, string propertyAlias, object? existingValue, DateTime newValue, string? culture, ref bool modified) {
 
         // TODO: old code - can possibly be simplified
 
@@ -518,22 +561,30 @@ public partial class MigrationsServiceBase : IMigrationsService {
         if (existingValue is DateTime currentDateTime && currentDateTime == newValue) return;
 
         modified = true;
-        content.SetValue(propertyAlias, newValue);
+        content.SetValue(propertyAlias, newValue, culture);
 
     }
 
     protected virtual void SetGuidValue(IContentBase content, string propertyAlias, object? existingValue, Guid newValue, ref bool modified) {
+        SetGuidValue(content, propertyAlias, existingValue, newValue, null, ref modified);
+    }
+
+    protected virtual void SetGuidValue(IContentBase content, string propertyAlias, object? existingValue, Guid newValue, string? culture, ref bool modified) {
         if (existingValue?.ToString() == newValue.ToString()) return;
-        content.SetValue(propertyAlias, newValue);
+        content.SetValue(propertyAlias, newValue, culture);
         modified = true;
     }
 
-    protected virtual void SetValue(IContentBase content, string propertyAlias, object? existingValue, object newValue, ref bool modified) {
+    protected void SetValue(IContentBase content, string propertyAlias, object? existingValue, object newValue, ref bool modified) {
+        SetValue(content, propertyAlias, existingValue, newValue, null, ref modified);
+    }
+
+    protected virtual void SetValue(IContentBase content, string propertyAlias, object? existingValue, object newValue, string? culture, ref bool modified) {
 
         JToken newToken = ToJson(newValue);
         string? newValueString = newToken.Type == JTokenType.String ? newToken.Value<string>() : newToken.ToString(Formatting.None);
 
-        content.SetValue(propertyAlias, newValueString);
+        content.SetValue(propertyAlias, newValueString, culture);
         modified |= !Equals(existingValue, newValueString);
 
     }

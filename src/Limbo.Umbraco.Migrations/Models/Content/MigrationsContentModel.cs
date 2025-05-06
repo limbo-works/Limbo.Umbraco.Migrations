@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using Limbo.Umbraco.MigrationsClient.Models.Content;
@@ -29,6 +30,8 @@ public class MigrationsContentModel {
     public DateTime UpdateDate { get; set; }
 
     public Dictionary<string, object?> Properties { get; } = [];
+
+    public Dictionary<string, MigrationsVariantModel> Variants { get; } = [];
 
     public MigrationsContentModel(LegacyContent entity) {
         Entity = entity;
@@ -78,6 +81,36 @@ public class MigrationsContentModel<TModel> : MigrationsContentModel where TMode
         } else {
             Properties[propertyType.Alias] = value;
         }
+
+        return this;
+
+    }
+
+    public MigrationsContentModel<TModel> AddVariant(CultureInfo culture, Action<MigrationsVariantModel<TModel>> action) {
+
+        MigrationsVariantModel<TModel> variant = new(culture.ToString(), ContentType);
+
+        Variants.Add(culture.ToString(), variant);
+
+        action(variant);
+
+        return this;
+
+    }
+
+    public MigrationsVariantModel<TModel> AddVariant(CultureInfo culture) {
+
+        MigrationsVariantModel<TModel> variant = new(culture.ToString(), ContentType);
+
+        Variants.Add(culture.ToString(), variant);
+
+        return variant;
+
+    }
+
+    public MigrationsContentModel<TModel> AddVariant(MigrationsVariantModel variant) {
+
+        Variants.Add(variant.CultureName, variant);
 
         return this;
 
