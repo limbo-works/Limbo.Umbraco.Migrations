@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Elements;
 using Limbo.Umbraco.MigrationsClient.Models.Skybrud.Grid;
 using Skybrud.Essentials.Reflection;
 using Skybrud.Essentials.Security;
@@ -22,6 +23,8 @@ public class BlockListContentData {
         Udi = new GuidUdi("element", key);
         ContentType = contentType;
     }
+
+    public BlockListContentData(ElementsItem item, IPublishedContentType contentType) : this(SecurityUtils.GetMd5Guid($"{item.Key}¤settings"), contentType) { }
 
     public BlockListContentData(GridControl control, IPublishedContentType contentType) {
 
@@ -53,6 +56,8 @@ public class BlockListContentData {
 public class BlockListContentData<TModel> : BlockListContentData where TModel : PublishedElementModel {
 
     public BlockListContentData(Guid key, IPublishedContentType contentType) : base(key, contentType) { }
+
+    public BlockListContentData(ElementsItem item, IPublishedContentType contentType) : base(item, contentType) { }
 
     public BlockListContentData(GridControl control, IPublishedContentType contentType) : base(control, contentType) { }
 
