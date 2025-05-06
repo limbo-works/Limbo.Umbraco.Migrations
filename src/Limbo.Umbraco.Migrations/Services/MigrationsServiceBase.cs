@@ -631,6 +631,11 @@ public partial class MigrationsServiceBase : IMigrationsService {
         return (BlockListContentData<T>) Activator.CreateInstance(type, key, GetModelType<T>())!;
     }
 
+    public virtual BlockListContentData<T> CreateBlockListContentData<T>(ElementsItem item) where T : PublishedElementModel {
+        Type type = typeof(BlockListContentData<>).MakeGenericType(typeof(T));
+        return (BlockListContentData<T>) Activator.CreateInstance(type, item, GetModelType<T>())!;
+    }
+
     public virtual BlockListContentData<T> CreateBlockListContentData<T>(GridControl control) where T : PublishedElementModel {
         Type type = typeof(BlockListContentData<>).MakeGenericType(typeof(T));
         return (BlockListContentData<T>) Activator.CreateInstance(type, control, GetModelType<T>())!;
@@ -639,6 +644,11 @@ public partial class MigrationsServiceBase : IMigrationsService {
     public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(Guid key) where T : PublishedElementModel {
         Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
         return (BlockListSettingsData<T>) Activator.CreateInstance(type, key, GetModelType<T>())!;
+    }
+
+    public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(ElementsItem item) where T : PublishedElementModel {
+        Type type = typeof(BlockListSettingsData<>).MakeGenericType(typeof(T));
+        return (BlockListSettingsData<T>) Activator.CreateInstance(type, item, GetModelType<T>())!;
     }
 
     public virtual BlockListSettingsData<T> CreateBlockListSettingsData<T>(GridControl control) where T : PublishedElementModel {
