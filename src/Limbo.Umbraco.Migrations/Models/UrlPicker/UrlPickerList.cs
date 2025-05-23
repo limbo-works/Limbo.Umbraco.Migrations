@@ -30,6 +30,10 @@ public class UrlPickerList : IReadOnlyList<UrlPickerItem> {
         Add(item);
     }
 
+    public UrlPickerList(IEnumerable<UrlPickerItem> items) {
+        _items.AddRange(items);
+    }
+
     #endregion
 
     #region Member methods
