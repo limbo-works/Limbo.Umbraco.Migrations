@@ -4,6 +4,11 @@ namespace Limbo.Umbraco.Migrations.Models.Content;
 
 public static class MigrationsContentModelExtensions {
 
+    public static T SetKey<T>(this T model, Guid key) where T : MigrationsContentModel {
+        model.Key = key;
+        return model;
+    }
+
     /// <summary>
     /// Sets the parent key to the specified <paramref name="parentKey"/>. This method may be used to set a different
     /// parent than the page had in the legacy solution.
