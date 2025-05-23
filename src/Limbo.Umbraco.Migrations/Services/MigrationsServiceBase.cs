@@ -317,6 +317,7 @@ public partial class MigrationsServiceBase : IMigrationsService {
         mediaTypeAlias = extension switch {
             "ai" => UmbracoMediaTypes.File,
             "doc" => UmbracoMediaTypes.File,
+            "docm" => UmbracoMediaTypes.File,
             "docx" => UmbracoMediaTypes.File,
             "eps" => UmbracoMediaTypes.File,
             "gif" => UmbracoMediaTypes.Image,
