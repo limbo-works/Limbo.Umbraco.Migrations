@@ -62,6 +62,32 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
     protected HashSet<Guid> IgnoredKeys { get; } = new();
 
+    /// <summary>
+    /// A dictionary with mapping of file extensions to media types.
+    /// </summary>
+    public Dictionary<string, string> MediaExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase) {
+        {"ai", UmbracoMediaTypes.File},
+        {"doc", UmbracoMediaTypes.File},
+        {"docm", UmbracoMediaTypes.File},
+        {"docx", UmbracoMediaTypes.File},
+        {"eps", UmbracoMediaTypes.File},
+        {"gif", UmbracoMediaTypes.Image},
+        {"jfif", UmbracoMediaTypes.File},
+        {"jpg", UmbracoMediaTypes.Image},
+        {"jpeg", UmbracoMediaTypes.Image},
+        {"mp4", UmbracoMediaTypes.Video},
+        {"msg", UmbracoMediaTypes.File},
+        {"pdf", UmbracoMediaTypes.Pdf},
+        {"png", UmbracoMediaTypes.Image},
+        {"ppt", UmbracoMediaTypes.File},
+        {"pptx", UmbracoMediaTypes.File},
+        {"psd", UmbracoMediaTypes.File},
+        {"svg", UmbracoMediaTypes.Svg},
+        {"xls", UmbracoMediaTypes.File},
+        {"xlsx", UmbracoMediaTypes.File},
+        {"zip", UmbracoMediaTypes.File}
+    };
+
     #endregion
 
     #region Constructors
@@ -219,10 +245,12 @@ public partial class MigrationsServiceBase : IMigrationsService {
         var parent = source.Path.Count == 0 ? null : ImportMedia(source.Path.Last().Key);
 
         return source.ContentTypeAlias switch {
-            "Folder" => ImportMediaFolder(source, parent),
-            "Image" => ImportMediaImage(source, parent),
-            "File" => ImportMediaFile(source, parent),
-            "video" => ImportMediaFile(source, parent),
+            UmbracoMediaTypes.Folder => ImportMediaFolder(source, parent),
+            UmbracoMediaTypes.Image => ImportMediaImage(source, parent),
+            UmbracoMediaTypes.File => ImportMediaFile(source, parent),
+            UmbracoMediaTypes.Article => ImportMediaFile(source, parent, UmbracoMediaTypes.Article),
+            UmbracoMediaTypes.VectorGraphics => ImportMediaFile(source, parent, UmbracoMediaTypes.VectorGraphics),
+            UmbracoMediaTypes.Video => ImportMediaFile(source, parent, UmbracoMediaTypes.Video),
             _ => throw new Exception($"Unsupported media type: {source.ContentTypeAlias}\r\n\r\nID: {source.Id}\r\nKey: {source.Key}")
         };
 
@@ -314,32 +342,27 @@ public partial class MigrationsServiceBase : IMigrationsService {
     }
 
     protected virtual bool TryGetMediaTypeAliasFromExtension(string extension, [NotNullWhen(true)] out string? mediaTypeAlias) {
-        mediaTypeAlias = extension switch {
-            "ai" => UmbracoMediaTypes.File,
-            "doc" => UmbracoMediaTypes.File,
-            "docm" => UmbracoMediaTypes.File,
-            "docx" => UmbracoMediaTypes.File,
-            "eps" => UmbracoMediaTypes.File,
-            "gif" => UmbracoMediaTypes.Image,
-            "jfif" => UmbracoMediaTypes.File,
-            "jpg" => UmbracoMediaTypes.Image,
-            "jpeg" => UmbracoMediaTypes.Image,
-            "msg" => UmbracoMediaTypes.File,
-            "pdf" => UmbracoMediaTypes.Pdf,
-            "png" => UmbracoMediaTypes.Image,
-            "ppt" => UmbracoMediaTypes.File,
-            "pptx" => UmbracoMediaTypes.File,
-            "psd" => UmbracoMediaTypes.File,
-            "svg" => UmbracoMediaTypes.Svg,
-            "xls" => UmbracoMediaTypes.File,
-            "xlsx" => UmbracoMediaTypes.File,
-            "zip" => UmbracoMediaTypes.File,
-            _ => null
-        };
-        return mediaTypeAlias is not null;
+        return MediaExtensions.TryGetValue(extension, out mediaTypeAlias);
     }
 
     protected virtual IMedia ImportMediaFile(LegacyMedia source, IMedia? parent) {
+
+        string? extension = source.GetString("umbracoExtension");
+
+        string mediaTypeAlias;
+        if (source.ContentTypeAlias == "video") {
+            mediaTypeAlias = UmbracoMediaTypes.Video;
+        } else if (extension is not null && TryGetMediaTypeAliasFromExtension(extension, out string? result)) {
+            mediaTypeAlias = result;
+        } else {
+            throw new MigrationsException($"Unknown file extension '{extension}' for media with key '{source.Key}'.");
+        }
+
+        return ImportMediaFile(source, parent, mediaTypeAlias);
+
+    }
+
+    protected virtual IMedia ImportMediaFile(LegacyMedia source, IMedia? parent, string mediaTypeAlias) {
 
         string? umbracoFilePath = source.JObject.GetStringByPath("properties.umbracoFile.value.src") ?? source.JObject.GetStringByPath("properties.umbracoFile.value");
         if (string.IsNullOrWhiteSpace(umbracoFilePath)) throw new Exception($"Media with key {source.Key} and doesn't have a valid path.\r\n\r\n" + source.JObject);
@@ -349,21 +372,10 @@ public partial class MigrationsServiceBase : IMigrationsService {
 
         string mediaPath = Path.Combine(tempDir, Guid.NewGuid().ToString());
         string filename = Path.GetFileName(umbracoFilePath);
-        string? extension = source.GetString("umbracoExtension");
-
-        string contentTypeAlias;
-
-        if (source.ContentTypeAlias == "video") {
-            contentTypeAlias = UmbracoMediaTypes.Video;
-        } else if (extension is not null && TryGetMediaTypeAliasFromExtension(extension, out string? result)) {
-            contentTypeAlias = result;
-        } else {
-            throw new MigrationsException($"Unknown file extension '{extension}' for media with key '{source.Key}'.");
-        }
 
         MigrationsClient.DownloadBytes(source, mediaPath);
 
-        IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, contentTypeAlias, MigrationUserId);
+        IMedia m = MediaService.CreateMediaWithIdentity(source.Name, parent?.Id ?? -1, mediaTypeAlias, MigrationUserId);
         m.Key = source.Key;
         m.CreateDate = source.CreateDate.DateTimeOffset.DateTime;
 
